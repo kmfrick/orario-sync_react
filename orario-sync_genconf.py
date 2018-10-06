@@ -29,21 +29,32 @@ print("Found courses:\n")
 for i, courseLink in enumerate(courseLinks, 0):    
     print(i, ": " + getCourseType(courseLink) + "/" + getCourseName(courseLink))
 
+valid = True
+
 try:
     courseNumber = int(input("Select your course's number from the list: "))
+    while (courseNumber < 0 or courseNumber > len(courseLinks)):
+        courseNumber = int(input("The course you selected is not on the list. Enter your course number: "))
 except ValueError:
     print("Not a number!")
+    valid = False
 
 try:
     year = int(input("Type the year you are enrolled in: "))
+    while (year < 0):
+        year = int(input("This is a timetable app, not a time machine! Enter your year: "))
 except ValueError:
+    valid = False
     print("Not a number!")
 
+if (valid): 
 #generate config file
-configFileName = open(constant.CONFNAME, "w+")
-configFileName.write(getCourseType(courseLinks[courseNumber]) + "\n")
-configFileName.write(getCourseName(courseLinks[courseNumber]) + "\n")
-configFileName.write(str(year) + "\n")
-configFileName.close()
+    configFileName = open(constant.CONFNAME, "w+")
+    configFileName.write(getCourseType(courseLinks[courseNumber]) + "\n")
+    configFileName.write(getCourseName(courseLinks[courseNumber]) + "\n")
+    configFileName.write(str(year) + "\n")
+    configFileName.close()
+else:
+    print("You entered invalid parameters")
 
 
