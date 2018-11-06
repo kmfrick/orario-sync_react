@@ -1,9 +1,11 @@
-#url building
-CRSPREF = "https://corsi.unibo.it/"
-CRSSUFF = "/orario-lezioni/@@orario_reale_json?anno="
+# url building
+JSONFILENAME = "@@orario_reale_json"
+TIMETABLESUFF = "/orario-lezioni/" + JSONFILENAME + "?anno="
 CURRSUF = "&curricula="
+SCHLTYPE = "internal-link"
+CRSSUFF = "/corsi/corsi-di-studio"
 
-#json fields
+# json fields
 EVENTS = "events"
 TITLE = "title"
 ROOMS = "aule"
@@ -13,12 +15,15 @@ START = "start"
 END = "end"
 CURR = "curriculum"
 COURSE = "corso"
-TYPEPOS = 0
+URLPOS = 0
 NAMEPOS = 1
 YEARPOS = 2
 
-#config filename
+# config filename
 CONFNAME = "orario-sync.ini"
 
-#timetable url
+# timetable url
 TIMETABLEURL = 'http://www.ingegneriarchitettura.unibo.it/it/orario/orario-lezioni'
+
+# list of schools
+SCHOOLSURL = "https://www.unibo.it/it/ateneo/sedi-e-strutture/scuole"
