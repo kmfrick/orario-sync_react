@@ -19,11 +19,15 @@ URLPOS = 0
 NAMEPOS = 1
 YEARPOS = 2
 
+# html info
+COURSELINK = "Sito del Corso"
+COURSENAMETAG = "data-title"
+
+# error handling
+NOTFOUND = "NOTFOUND"
+
 # config filename
 CONFNAME = "orario-sync.ini"
-
-# timetable url
-TIMETABLEURL = 'http://www.ingegneriarchitettura.unibo.it/it/orario/orario-lezioni'
 
 # list of schools
 SCHOOLSURL = "https://www.unibo.it/it/ateneo/sedi-e-strutture/scuole"

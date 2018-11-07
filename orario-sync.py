@@ -1,6 +1,7 @@
-import requests
 import dateutil.parser
+import requests
 from icalendar import Calendar, Event
+
 import constant
 
 cal = Calendar()

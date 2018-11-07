@@ -1,8 +1,10 @@
+import re
+
+import requests
 from bs4 import BeautifulSoup
 from bs4.dammit import EncodingDetector
-import requests
+
 import constant
-import re
 
 
 def get_encoding(resp):
@@ -12,19 +14,68 @@ def get_encoding(resp):
     return encoding
 
 
-# get list of schools
-resp = requests.get(constant.SCHOOLSURL)
-soup = BeautifulSoup(resp.content, from_encoding=get_encoding(resp), features="lxml")
-school_links = []
-for atag in soup.find_all('a', class_=constant.SCHLTYPE, href=True):
-    school_links.append((atag.contents[0], atag['href']))
-school_links.sort()
+def get_school_links():
+    resp = requests.get(constant.SCHOOLSURL)
+    soup = BeautifulSoup(resp.content, from_encoding=get_encoding(resp), features="lxml")
+    school_links = []
+    for atag in soup.find_all('a', class_=constant.SCHLTYPE, href=True):
+        school_links.append((atag.contents[0], atag['href']))
+    school_links.sort()
+    return school_links
 
-print("Found schools:")
-for i, school_link in enumerate(school_links, 0):
-    print(i, ": " + school_link[0])
 
-# school selection
+def get_course_list(school_url):
+    # get url for list of courses
+    course_list_url = school_url + constant.CRSSUFF
+
+    # generate sorted list of courses
+    resp = requests.get(course_list_url)
+    soup = BeautifulSoup(resp.content, from_encoding=get_encoding(resp), features="lxml")
+
+    course_links = []
+    course_numbers = []
+    for atag in soup.find_all('a', href=True):
+        if atag.contents:
+            if atag.contents[0] == constant.COURSELINK:
+                course_number = re.findall(r"\d+", atag[constant.COURSENAMETAG])[0]
+                course_links.append((course_number, atag[constant.COURSENAMETAG], atag["href"]))
+                course_numbers.append(course_number)
+    course_links.sort()
+    return {"links": course_links, "codes": course_numbers}
+
+
+def get_school_url(school_links, school_number):
+    school_url = school_links[school_number][1]
+    if school_url[-3:] != "/it": school_url += "/it"
+    return school_url
+
+
+def get_course(course_links, course_number):
+    for c in course_links:
+        if c[0] == course_number:
+            course_url = c[2]
+            course_name = c[1]
+            break
+    else:
+        course_url = constant.NOTFOUND
+        course_name = constant.NOTFOUND
+    return {"url": course_url, "name": course_name}
+
+
+def print_courses(course_links):
+    for course_link in course_links:
+        print(course_link[0], ": " + course_link[1])
+
+
+def print_schools(school_links):
+    for i, school_link in enumerate(school_links, 0):
+        print(i, ": " + school_link[0])
+
+
+# prompts
+school_links = get_school_links()
+print_schools(school_links)
+
 while 1:
     try:
         school_number = int(input("Select your school from the list: "))
@@ -33,29 +84,11 @@ while 1:
     except ValueError:
         print("Not a number!")
     break
-school_url = school_links[school_number][1]
-if school_url[-3:] != "/it": school_url += "/it"
 
-# get url for list of courses
-course_list_url = school_url + constant.CRSSUFF
-
-# generate sorted list of courses
-resp = requests.get(course_list_url)
-soup = BeautifulSoup(resp.content, from_encoding=get_encoding(resp), features="lxml")
-
-course_links = []
-course_numbers = []
-for atag in soup.find_all('a', href=True):
-    if atag.contents:
-        if atag.contents[0] == "Sito del Corso":
-            course_number = re.findall(r"\d+", atag["data-title"])[0]
-            course_links.append((course_number, atag["data-title"], atag["href"]))
-            course_numbers.append(course_number)
-course_links.sort()
-
-print("Found courses:")
-for course_link in course_links:
-    print(course_link[0], ": " + course_link[1])
+course_list = get_course_list(get_school_url(school_links, school_number))
+course_numbers = course_list["codes"]
+course_links = course_list["links"]
+print_courses(course_links)
 
 while 1:
     try:
@@ -66,14 +99,7 @@ while 1:
         print("Not a number!")
     break
 
-for c in course_links:
-    if c[0] == course_number:
-        course_url = c[2]
-        course_name = c[1]
-        break
-else:
-    course_url = "NOTFOUND"
-    course_name = "NOTFOUND"
+course = get_course(course_links, course_number)
 
 while 1:
     try:
@@ -86,7 +112,7 @@ while 1:
 
 # generate config file
 configFileName = open(constant.CONFNAME, "w+")
-configFileName.write(course_url + "\n")
-configFileName.write(course_name + "\n")
+configFileName.write(course["url"] + "\n")
+configFileName.write(course["name"] + "\n")
 configFileName.write(str(year) + "\n")
 configFileName.close()
