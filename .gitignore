@@ -6,4 +6,4 @@ __pycache__/
 Dockerfile
 now.json
 requirements.txt
-orario_sync_app.py
+orario-sync_app.py

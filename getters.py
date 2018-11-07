@@ -16,7 +16,7 @@ def get_encoding(resp):
 
 def get_school_links():
     resp = requests.get(constant.SCHOOLSURL)
-    soup = BeautifulSoup(resp.content, from_encoding=get_encoding(resp), features="lxml")
+    soup = BeautifulSoup(resp.content, from_encoding=get_encoding(resp), features="html5lib")
     school_links = []
     for atag in soup.find_all('a', class_=constant.SCHLTYPE, href=True):
         school_links.append((atag.contents[0], atag['href']))
@@ -30,7 +30,7 @@ def get_course_list(school_url):
 
     # generate sorted list of courses
     resp = requests.get(course_list_url)
-    soup = BeautifulSoup(resp.content, from_encoding=get_encoding(resp), features="lxml")
+    soup = BeautifulSoup(resp.content, from_encoding=get_encoding(resp), features="html5lib")
 
     course_links = []
     course_numbers = []
