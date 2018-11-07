@@ -1,2 +1,9 @@
+app/
 .idea/
 __pycache__/
+
+.dockerignore
+Dockerfile
+now.json
+requirements.txt
+orario_sync_app.py
