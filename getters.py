@@ -19,8 +19,7 @@ def get_school_links():
     soup = BeautifulSoup(resp.content, from_encoding=get_encoding(resp), features="html5lib")
     school_links = []
     for atag in soup.find_all('a', class_=constant.SCHLTYPE, href=True):
-        school_links.append((atag.contents[0], atag['href']))
-    school_links.sort()
+        school_links.append({"name": atag.contents[0], "link": atag['href']})
     return school_links
 
 
@@ -45,7 +44,7 @@ def get_course_list(school_url):
 
 
 def get_school_url(school_links, school_number):
-    school_url = school_links[school_number][1]
+    school_url = school_links[school_number]["link"]
     if school_url[-3:] != "/it": school_url += "/it"
     return school_url
 

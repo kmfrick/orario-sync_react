@@ -7,7 +7,7 @@ def print_courses(course_links):
 
 def print_schools(school_links):
     for i, school_link in enumerate(school_links, 0):
-        print(i, ": " + school_link[0])
+        print(i, ": " + school_link["name"])
 
 
 # prompts
