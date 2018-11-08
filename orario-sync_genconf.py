@@ -2,7 +2,7 @@ from getters import *
 
 def print_courses(course_links):
     for course_link in course_links:
-        print(course_link[0], ": " + course_link[1])
+        print(course_link["code"], ": " + course_link["name"])
 
 
 def print_schools(school_links):

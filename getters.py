@@ -37,9 +37,8 @@ def get_course_list(school_url):
         if atag.contents:
             if atag.contents[0] == constant.COURSELINK:
                 course_number = re.findall(r"\d+", atag[constant.COURSENAMETAG])[0]
-                course_links.append((course_number, atag[constant.COURSENAMETAG], atag["href"]))
+                course_links.append({"code": course_number, "name": atag[constant.COURSENAMETAG], "link": atag["href"]})
                 course_numbers.append(course_number)
-    course_links.sort()
     return {"links": course_links, "codes": course_numbers}
 
 
@@ -51,9 +50,9 @@ def get_school_url(school_links, school_number):
 
 def get_course(course_links, course_number):
     for c in course_links:
-        if c[0] == course_number:
-            course_url = c[2]
-            course_name = c[1]
+        if c["code"] == course_number:
+            course_url = c["link"]
+            course_name = c["name"]
             break
     else:
         course_url = constant.NOTFOUND

@@ -7,3 +7,4 @@ Dockerfile
 now.json
 requirements.txt
 orario-sync_app.py
+orario-sync.ini
