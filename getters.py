@@ -102,3 +102,15 @@ def get_safe_course_name(name):
 
 def get_course_url(course_list, course_number):
     return course_list["links"][course_number]["link"]
+
+
+def get_curriculum(curricula, curriculum_number):
+    return curricula[constant.CURR][curriculum_number]
+
+
+def get_course_code(course_list, course_number):
+    return course_list["codes"][course_number]
+
+
+def get_course_name(course_list, course_number):
+    return course_list["links"][course_number]["name"]
