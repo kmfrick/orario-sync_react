@@ -101,4 +101,4 @@ def get_safe_course_name(name):
 
 
 def get_course_url(course_list, course_number):
-    return course_list["links"][course_number]
+    return course_list["links"][course_number]["link"]
