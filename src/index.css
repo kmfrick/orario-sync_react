@@ -1,100 +1,127 @@
 body {
-  margin: 0;
-  padding: 0;
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Roboto", "Oxygen",
+    margin: 0;
+    padding: 0;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Roboto", "Oxygen",
     "Ubuntu", "Cantarell", "Fira Sans", "Droid Sans", "Helvetica Neue",
     sans-serif;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
+    text-align: center;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+}
+
+button {
+    background-color: #313131;
+    margin: 4em;
+    border: none;
+    color: white;
+    padding: 2em 4em;
+    text-align: center;
+    text-decoration: none;
+    display: inline-block;
+    font-size: 16px;
 }
 
 code {
-  font-family: source-code-pro, Menlo, Monaco, Consolas, "Courier New",
+    font-family: source-code-pro, Menlo, Monaco, Consolas, "Courier New",
     monospace;
 }
 
 body {
-	font-family: sans-serif;
-	background-color: #eeeeee
+    font-family: sans-serif;
+    background-color: #eeeeee
+}
+
+select {
+    width: 30em;
+    background: #fafafa;
+    border: 1px solid #cacaca;
+    margin-right: 0.5em;
 }
 
 .react-list-select {
-	display: inline-block;
-	position: relative;
-	outline: none;
+    display: inline-block;
+    position: relative;
+    outline: none;
+    text-align: left;
 }
 
 .react-list-select--item {
-	padding: 0.3em 0.6em;
-	cursor: pointer;
-	position: relative;
-	-webkit-user-select: none;
-	-moz-user-select: none;
-	-ms-user-select: none;
-	-o-user-select: none;
-	user-select: none;
+    padding: 0.3em 0.6em;
+    cursor: pointer;
+    position: relative;
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    -o-user-select: none;
+    user-select: none;
 }
 
 .react-list-select--item.is-selected {
-	-webkit-user-select: inherit;
-	-moz-user-select: inherit;
-	-ms-user-select: inherit;
-	-o-user-select: inherit;
-	user-select: inherit;
+    -webkit-user-select: inherit;
+    -moz-user-select: inherit;
+    -ms-user-select: inherit;
+    -o-user-select: inherit;
+    user-select: inherit;
 }
 
 .react-list-select--item.is-disabled {
-	cursor: default;
+    cursor: default;
 }
 
 ul {
-	list-style: none;
-	padding: 0;
-	margin: 0;
+    list-style: none;
+    padding: 0;
+    margin: 0;
 }
 
 body {
-	padding: 3em;
+    padding: 3em;
 }
 
 .demo > div {
-	display: inline-block;
-	vertical-align: top;
-	margin-right: 1.5em;
+    display: inline-block;
+    vertical-align: top;
+    margin-right: 1.5em;
 }
 
 /* Add some style to the list */
 
 .react-list-select {
-	background: #fafafa;
-	border: 1px solid #cacaca;
-	margin-right: 0.5em;
+    background: #fafafa;
+    border: 1px solid #cacaca;
+    margin-right: 0.5em;
 }
+
 .react-list-select--item.is-selected {
-	background: #d7e7ff;
+    background: #d7e7ff;
 }
+
 .react-list-select:focus .react-list-select--item.is-focused::before,
 .react-list-select:focus .react-list-select--item.is-focused::after {
-	content: '';
-	position: absolute;
-	top: 0;
-	bottom: 0;
-	width: 2px;
-	background: #79b9ff;
+    content: '';
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    width: 2px;
+    background: #79b9ff;
 }
+
 .react-list-select:focus .react-list-select--item.is-focused::before {
-	left: 0;
+    left: 0;
 }
+
 .react-list-select:focus .react-list-select--item.is-focused::after {
-	right: 0;
+    right: 0;
 }
+
 .react-list-select--item.is-disabled {
-	color: #afafaf;
+    color: #afafaf;
 }
 
 .context-menu .react-list-select {
-	padding: 0.3em 0;
+    padding: 0.3em 0;
 }
+
 .context-menu .react-list-select--item {
-	font-size: 0.8125em;
+    font-size: 0.8125em;
 }
