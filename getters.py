@@ -1,8 +1,10 @@
 import re
 
+import dateutil.parser
 import requests
 from bs4 import BeautifulSoup
 from bs4.dammit import EncodingDetector
+from icalendar import Calendar, Event
 
 import constant
 
@@ -58,3 +60,45 @@ def get_course(course_links, course_number):
         course_url = constant.NOTFOUND
         course_name = constant.NOTFOUND
     return {"url": course_url, "name": course_name}
+
+
+def get_timetable(course_url, year, curriculum):
+    timetable_url = constant.TIMETABLEURLFORMAT.format(course_url, year, curriculum)
+    req = requests.get(url=timetable_url)
+    return req.json()
+
+
+def get_ical_file(timetable):
+    cal = Calendar()
+    for e in timetable[constant.EVENTS]:
+        title = e[constant.TITLE]
+        if e[constant.ROOMS]:
+            location = e[constant.ROOMS][0][constant.CLASSROOM] + ", " + e[constant.ROOMS][0][constant.CAMPUS]
+        else:
+            location = constant.NO_LOC_AVAILABLE
+        start = dateutil.parser.parse(e[constant.START])
+        end = dateutil.parser.parse(e[constant.END])
+        event = Event()
+        event.add('summary', title)
+        event.add('dtstart', start)
+        event.add('dtend', end)
+        event.add('location', location)
+        cal.add_component(event)
+    return cal.to_ical()
+
+
+def get_curricula(course_url, year):
+    curr_codes = []
+    curr_names = []
+    for curr in requests.get(constant.CURRICULAURLFORMAT.format(course_url, year)).json():
+        curr_codes.append(curr[constant.CURRVAL])
+        curr_names.append(curr[constant.CURRNAME])
+    return {constant.CURR: curr_codes, constant.CURRNAME: curr_names}
+
+
+def get_safe_course_name(name):
+    return "".join([c for c in name if c.isalpha() and not c.isdigit()]).rstrip()
+
+
+def get_course_url(course_list, course_number):
+    return course_list["links"][course_number]

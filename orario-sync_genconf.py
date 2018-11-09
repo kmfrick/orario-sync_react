@@ -1,4 +1,6 @@
-from getters import *
+import constant
+from getters import get_school_links, get_course_list, get_school_url, get_course, get_curricula
+
 
 def print_courses(course_links):
     for course_link in course_links:
@@ -8,6 +10,11 @@ def print_courses(course_links):
 def print_schools(school_links):
     for i, school_link in enumerate(school_links, 0):
         print(i, ": " + school_link["name"])
+
+
+def print_curricula(curricula):
+    for curr_code, curr_name in zip(curricula[constant.CURR], curricula[constant.CURRNAME]):
+        print("{} - {}".format(curr_code, curr_name))
 
 
 # prompts
@@ -48,9 +55,23 @@ while 1:
         print("Not a number!")
     break
 
+curricula = get_curricula(course[constant.CRSURL], year)
+print_curricula(curricula)
+curriculum_codes = curricula[constant.CURR]
+
+while 1:
+    try:
+        curr_code = input("Select your curriculum from the list: ")
+        while str(curr_code) not in curriculum_codes:
+            curr_code = input("The curriculum you selected is not on the list. Enter your curriculum number: ")
+    except ValueError:
+        print("Not a number!")
+    break
+
 # generate config file
 configFileName = open(constant.CONFNAME, "w+")
-configFileName.write(course["url"] + "\n")
-configFileName.write(course["name"] + "\n")
+configFileName.write(course[constant.CRSURL] + "\n")
+configFileName.write(course[constant.CRSNAME] + "\n")
 configFileName.write(str(year) + "\n")
+configFileName.write(str(curr_code) + "\n")
 configFileName.close()

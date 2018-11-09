@@ -1,38 +1,21 @@
-import dateutil.parser
-import requests
-from icalendar import Calendar, Event
-
 import constant
-
-cal = Calendar()
+from getters import get_timetable, get_ical_file, get_safe_course_name
 
 config_file = open(constant.CONFNAME)
 conf = config_file.readlines()
-course = "".join([c for c in conf[constant.NAMEPOS] if c.isalpha() and not c.isdigit()]).rstrip()
+
+course = get_safe_course_name(conf[constant.NAMEPOS])
+course_url = conf[constant.URLPOS].rstrip()
 year = conf[constant.YEARPOS].rstrip()
-timetable_url = conf[constant.URLPOS].rstrip() + constant.TIMETABLESUFF + year
+curriculum = conf[constant.CURRPOS].rstrip()
+timetable = get_timetable(course_url, year, curriculum)
+course_code = "0000"
+for i in range(0, len(timetable[constant.CURR])):
+    if timetable[constant.CURR][i][constant.CURR] == curriculum:
+        course_code = timetable[constant.CURR][i][constant.CURRCRS]
 
-timetable = requests.get(url=timetable_url).json()
+filename = "{}_{}.ics"
 
-for e in timetable[constant.EVENTS]:
-    title = e[constant.TITLE]
-    if e[constant.ROOMS]:
-        location = e[constant.ROOMS][0][constant.CLASSROOM] + ", " + e[constant.ROOMS][0][constant.CAMPUS]
-    else:
-        location = "No location data available"
-    start = dateutil.parser.parse(e[constant.START])
-    end = dateutil.parser.parse(e[constant.END])
-    event = Event()
-    event.add('summary', title)
-    event.add('dtstart', start)
-    event.add('dtend', end)
-    event.add('location', location)
-    cal.add_component(event)
-
-courseId = timetable[constant.CURR][0][constant.COURSE]
-
-ical = open(courseId + "_" + course + ".ics", 'wb')
-ical.write(cal.to_ical())
+ical = open(filename.format(course_code, course), 'wb')
+ical.write(get_ical_file(timetable))
 ical.close()
-
-
