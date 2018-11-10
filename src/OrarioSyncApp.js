@@ -1,7 +1,5 @@
 import React from "react";
 import SelectList from "./SelectList";
-import YearList from "./YearList";
-
 
 const beReqUrl = "https://orario-syncunibo-obxughlhjx.now.sh";
 const beGetSchools = "/getschools";
@@ -24,6 +22,7 @@ class OrarioSyncApp extends React.Component {
         courses: [],
         courseNumber: -1,
         courseType: "",
+        years: [],
         year: -1,
         curricula: [],
         curriculumNumber: -1,
@@ -41,6 +40,7 @@ class OrarioSyncApp extends React.Component {
 
         const schoolNumber = this.state.schoolNumber;
         const courseNumber = this.state.courseNumber;
+        const courseType = this.state.courseType;
         const year = this.state.year;
         if (prevState.schoolNumber !== schoolNumber) {
             fetch(beReqUrl + beGetCourses + schoolNumber)
@@ -54,6 +54,14 @@ class OrarioSyncApp extends React.Component {
                 curriculumNumber: -1
             });
 
+        }
+        if (prevState.courseType !== courseType) {
+            const durations = {"[LMCU]": 6, "[L]": 3, "[LM]": 2, "": 0};
+            const yearLabels = ["Primo", "Secondo", "Terzo", "Quarto", "Quinto", "Sesto"];
+            let items = [];
+            let year_numbers = [...Array(durations[this.state.courseType]).keys()];
+            year_numbers.forEach(i => items.push(yearLabels[i]));
+            this.setState({years: items});
         }
         if ((prevState.courseNumber !== courseNumber && year > 0) || prevState.year !== year) {
             fetch(beReqUrl + beGetCurricula + schoolNumber + "/" + courseNumber + "/" + year)
@@ -105,7 +113,7 @@ class OrarioSyncApp extends React.Component {
                 {courseType.length &&
                 <>
                     <h2>{yearHeader}</h2>
-                    <YearList courseType={this.state.courseType} onSelect={selected => {
+                    <SelectList items={this.state.years} onSelect={selected => {
                         this.setState({year: selected + 1});
                     }}/>
 

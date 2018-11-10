@@ -13,9 +13,11 @@ button {
     background-color: #313131;
     margin: 4em;
     border: none;
+    cursor: pointer;
     color: white;
     padding: 2em 4em;
     text-align: center;
+    align-self: center;
     text-decoration: none;
     display: inline-block;
     font-size: 16px;
