@@ -6,6 +6,10 @@ const beGetSchools = "/getschools";
 const beGetCourses = "/getcourses/";
 const beGetCurricula = "/getcurricula/";
 const beGetCalendar = "/getical/";
+
+const durations = {"[LMCU]": 6, "[L]": 3, "[LM]": 2, "": 0};
+const yearLabels = ["Primo", "Secondo", "Terzo", "Quarto", "Quinto", "Sesto"];
+
 const mainTitle = <>OrarioSync</>;
 const schoolHeader = <>Seleziona la tua Scuola</>;
 const courseHeader = <>Seleziona il tuo corso di studi</>;
@@ -56,11 +60,9 @@ class OrarioSyncApp extends React.Component {
 
         }
         if (prevState.courseType !== courseType) {
-            const durations = {"[LMCU]": 6, "[L]": 3, "[LM]": 2, "": 0};
-            const yearLabels = ["Primo", "Secondo", "Terzo", "Quarto", "Quinto", "Sesto"];
             let items = [];
-            let year_numbers = [...Array(durations[this.state.courseType]).keys()];
-            year_numbers.forEach(i => items.push(yearLabels[i]));
+            let yearNumbers = [...Array(durations[this.state.courseType]).keys()];
+            yearNumbers.forEach(i => items.push(yearLabels[i]));
             this.setState({years: items});
         }
         if ((prevState.courseNumber !== courseNumber && year > 0) || prevState.year !== year) {
@@ -99,31 +101,47 @@ class OrarioSyncApp extends React.Component {
             <>
                 <h1>{mainTitle}</h1>
                 <h2>{schoolHeader}</h2>
-                <SelectList items={schoolNames} onSelect={selected =>
-                    this.setState({schoolNumber: selected})
-                }/>
+                <SelectList
+                    items={schoolNames}
+                    onSelect={selected =>
+                        this.setState({schoolNumber: selected})
+                    }
+                    selected={schoolNumber}
+                />
                 {courses.length &&
                 <>
                     <h2>{courseHeader}</h2>
-                    <SelectList items={courseNames} onSelect={selected => {
-                        this.setState({courseNumber: selected});
-                        this.setState({courseType: courseTypeRE.exec(courseNames[selected])[0]});
-                    }}/>
+                    <SelectList
+                        items={courseNames}
+                        onSelect={selected => {
+                            this.setState({courseNumber: selected});
+                            this.setState({courseType: courseTypeRE.exec(courseNames[selected])[0]});
+                        }}
+                        selected={courseNumber}
+                    />
                 </>}
                 {courseType.length &&
                 <>
                     <h2>{yearHeader}</h2>
-                    <SelectList items={this.state.years} onSelect={selected => {
-                        this.setState({year: selected + 1});
-                    }}/>
+                    <SelectList
+                        items={this.state.years}
+                        onSelect={selected =>
+                            this.setState({year: selected + 1})
+                        }
+                        selected={year - 1}
+                    />
 
                 </>}
                 {year >= 0 &&
                 <>
                     <h2>{curriculumHeader}</h2>
-                    <SelectList items={this.state.curricula} onSelect={selected => {
-                        this.setState({curriculumNumber: selected})
-                    }}/>
+                    <SelectList
+                        items={this.state.curricula}
+                        onSelect={selected =>
+                            this.setState({curriculumNumber: selected})
+                        }
+                        selected={curriculumNumber}
+                    />
                 </>}
                 {curriculumNumber >= 0 &&
                 <div>
