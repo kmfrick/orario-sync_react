@@ -16,7 +16,7 @@ self.__precacheManifest = [
     "url": "/orario-sync_react/static/css/main.61342775.chunk.css"
   },
   {
-    "revision": "da84477b1950092e6cd5540898afdef0",
+    "revision": "fd4abdf612a495ecc07e7153b9c5b6e2",
     "url": "/orario-sync_react/index.html"
   }
 ];

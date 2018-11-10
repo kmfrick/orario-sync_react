@@ -14,7 +14,7 @@
 importScripts("https://storage.googleapis.com/workbox-cdn/releases/3.6.3/workbox-sw.js");
 
 importScripts(
-  "/orario-sync_react/precache-manifest.9c7edd51a2f3a887cb4c2cbd4e1e66b0.js"
+  "/orario-sync_react/precache-manifest.a43e4f6b92eb75a3a095379f89834733.js"
 );
 
 workbox.clientsClaim();
