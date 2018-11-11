@@ -1,7 +1,11 @@
+//TODO: background color based on school
+//TODO: autoscroll
+//TODO: choice of courses to include
+
 import React from "react";
 import SelectList from "./SelectList";
 
-const beReqUrl = "https://orario-syncunibo-obxughlhjx.now.sh";
+const beReqUrl = "https://orario-syncunibo-tvwqqxhvxt.now.sh/";
 const beGetSchools = "/getschools";
 const beGetCourses = "/getcourses/";
 const beGetCurricula = "/getcurricula/";
@@ -49,7 +53,7 @@ class OrarioSyncApp extends React.Component {
         if (prevState.schoolNumber !== schoolNumber) {
             fetch(beReqUrl + beGetCourses + schoolNumber)
                 .then(response => response.json())
-                .then(data => this.setState({courses: data.links}));
+                .then(data => this.setState({courses: data}));
             this.setState({
                 courseNumber: -1,
                 courseType: "",
@@ -68,7 +72,7 @@ class OrarioSyncApp extends React.Component {
         if ((prevState.courseNumber !== courseNumber && year > 0) || prevState.year !== year) {
             fetch(beReqUrl + beGetCurricula + schoolNumber + "/" + courseNumber + "/" + year)
                 .then(response => response.json())
-                .then(data => this.setState({curricula: data.label}));
+                .then(data => this.setState({curricula: data}));
             this.setState({
                 curricula: [],
                 curriculumNumber: -1
@@ -96,6 +100,8 @@ class OrarioSyncApp extends React.Component {
         courses.forEach(item => courseNames.push(item.name));
 
         if (!curricula.length && year >= 0) return <span>Getting curricula...</span>;
+        let curriculumNames = [];
+        curricula.forEach(item => curriculumNames.push(item.name));
 
         return (
             <>
@@ -136,7 +142,7 @@ class OrarioSyncApp extends React.Component {
                 <>
                     <h2>{curriculumHeader}</h2>
                     <SelectList
-                        items={this.state.curricula}
+                        items={curriculumNames}
                         onSelect={selected =>
                             this.setState({curriculumNumber: selected})
                         }
