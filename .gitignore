@@ -8,3 +8,5 @@ requirements.txt
 orario-sync.ini
 
 *.ics
+*.pyc
+*.html

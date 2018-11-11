@@ -25,6 +25,12 @@ def get_school_links():
     return school_links
 
 
+def get_school_url(school_links, school_number):
+    school_url = school_links[school_number]["link"]
+    if school_url[-3:] != "/it": school_url += "/it"
+    return school_url
+
+
 def get_course_list(school_url):
     # get url for list of courses
     course_list_url = school_url + constant.CRSSUFF
@@ -33,33 +39,40 @@ def get_course_list(school_url):
     resp = requests.get(course_list_url)
     soup = BeautifulSoup(resp.content, from_encoding=get_encoding(resp), features="html5lib")
 
-    course_links = []
-    course_numbers = []
+    courses = []
     for atag in soup.find_all('a', href=True):
         if atag.contents:
             if atag.contents[0] == constant.COURSELINK:
                 course_number = re.findall(r"\d+", atag[constant.COURSENAMETAG])[0]
-                course_links.append({"code": course_number, "name": atag[constant.COURSENAMETAG], "link": atag["href"]})
-                course_numbers.append(course_number)
-    return {"links": course_links, "codes": course_numbers}
+                courses.append({"code": course_number, "name": atag[constant.COURSENAMETAG], "link": atag["href"]})
+    return courses
 
 
-def get_school_url(school_links, school_number):
-    school_url = school_links[school_number]["link"]
-    if school_url[-3:] != "/it": school_url += "/it"
-    return school_url
+def get_course_url(course_list, course_number):
+    return course_list[course_number]["link"]
 
 
-def get_course(course_links, course_number):
-    for c in course_links:
-        if c["code"] == course_number:
-            course_url = c["link"]
-            course_name = c["name"]
-            break
-    else:
-        course_url = constant.NOTFOUND
-        course_name = constant.NOTFOUND
-    return {"url": course_url, "name": course_name}
+def get_course_name(course_list, course_number):
+    return course_list[course_number]["name"]
+
+
+def get_course_code(course_list, course_number):
+    return course_list[course_number]["code"]
+
+
+def get_curricula(course_url, year):
+    curricula = []
+    for curr in requests.get(constant.CURRICULAURLFORMAT.format(course_url, year)).json():
+        curricula.append({"code": curr[constant.CURRVAL], "name": curr[constant.CURRNAME]})
+    return curricula
+
+
+def get_curriculum_name(curricula, curriculum_number):
+    return curricula[curriculum_number]["name"]
+
+
+def get_curriculum_code(curricula, curriculum_number):
+    return curricula[curriculum_number]["code"]
 
 
 def get_timetable(course_url, year, curriculum):
@@ -87,30 +100,5 @@ def get_ical_file(timetable):
     return cal.to_ical()
 
 
-def get_curricula(course_url, year):
-    curr_codes = []
-    curr_names = []
-    for curr in requests.get(constant.CURRICULAURLFORMAT.format(course_url, year)).json():
-        curr_codes.append(curr[constant.CURRVAL])
-        curr_names.append(curr[constant.CURRNAME])
-    return {constant.CURR: curr_codes, constant.CURRNAME: curr_names}
-
-
 def get_safe_course_name(name):
     return "".join([c for c in name if c.isalpha() and not c.isdigit()]).rstrip()
-
-
-def get_course_url(course_list, course_number):
-    return course_list["links"][course_number]["link"]
-
-
-def get_curriculum(curricula, curriculum_number):
-    return curricula[constant.CURR][curriculum_number]
-
-
-def get_course_code(course_list, course_number):
-    return course_list["codes"][course_number]
-
-
-def get_course_name(course_list, course_number):
-    return course_list["links"][course_number]["name"]
