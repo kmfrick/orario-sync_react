@@ -13,18 +13,21 @@ class SelectList extends List {
     }
 
     render() {
-        const {selected} = this.props;
-        if(selected >= 0) return <List
-            multiple={false}
-            items={this.props.items}
-            onChange={this.updateSelected}
-            selected={[selected]}
-        />;
-        else return <List
-            multiple={false}
-            items={this.props.items}
-            onChange={this.updateSelected}
-        />;
+        if (this.props.multiple) {
+            return <List
+                multiple={true}
+                items={this.props.items}
+                onChange={this.updateSelected}
+                selected={this.props.selected}
+            />
+        } else {
+            return <List
+                multiple={false}
+                items={this.props.items}
+                onChange={this.updateSelected}
+                selected={[this.props.selected]}
+            />;
+        }
 
     }
 }

@@ -1,15 +1,20 @@
 //TODO: background color based on school
 //TODO: autoscroll
-//TODO: choice of courses to include
 
 import React from "react";
 import SelectList from "./SelectList";
 
-const beReqUrl = "https://orario-syncunibo-tvwqqxhvxt.now.sh/";
+const beReqUrl = "http://localhost:5000";
+const beParamSchool = "?school=";
+const beParamCourse = "&course=";
+const beParamYear = "&year=";
+const beParamCurr = "&curr=";
+const beParamClsBtm = "&classes=";
 const beGetSchools = "/getschools";
-const beGetCourses = "/getcourses/";
-const beGetCurricula = "/getcurricula/";
-const beGetCalendar = "/getical/";
+const beGetCourses = "/getcourses";
+const beGetCurricula = "/getcurricula";
+const beGetClasses = "/getclasses";
+const beGetCalendar = "/getical";
 
 const durations = {"[LMCU]": 6, "[L]": 3, "[LM]": 2, "": 0};
 const yearLabels = ["Primo", "Secondo", "Terzo", "Quarto", "Quinto", "Sesto"];
@@ -19,21 +24,26 @@ const schoolHeader = <>Seleziona la tua Scuola</>;
 const courseHeader = <>Seleziona il tuo corso di studi</>;
 const yearHeader = <>Seleziona l'anno a cui sei iscritto</>;
 const curriculumHeader = <>Seleziona il tuo curriculum</>;
+const classesHeader = <>Seleziona i corsi che segui</>;
 const buttonContent = <>Scarica orario in iCal</>;
+
 
 const courseTypeRE = new RegExp("\\[(.*?)]");
 
 class OrarioSyncApp extends React.Component {
     state = {
         schools: [],
-        schoolNumber: -1,
+        schoolIndex: -1,
         courses: [],
-        courseNumber: -1,
+        courseIndex: -1,
         courseType: "",
         years: [],
         year: -1,
         curricula: [],
-        curriculumNumber: -1,
+        curriculumIndex: -1,
+        classes: [],
+        selectedClasses: [],
+        classesBtm: 0
     };
 
     componentDidMount() {
@@ -46,20 +56,22 @@ class OrarioSyncApp extends React.Component {
 
     componentDidUpdate(prevProps, prevState) {
 
-        const schoolNumber = this.state.schoolNumber;
-        const courseNumber = this.state.courseNumber;
+        const schoolIndex = this.state.schoolIndex;
+        const courseIndex = this.state.courseIndex;
         const courseType = this.state.courseType;
+        const curriculumIndex = this.state.curriculumIndex;
+        const selectedClasses = this.state.selectedClasses;
         const year = this.state.year;
-        if (prevState.schoolNumber !== schoolNumber) {
-            fetch(beReqUrl + beGetCourses + schoolNumber)
+        if (prevState.schoolIndex !== schoolIndex) {
+            fetch(beReqUrl + beGetCourses + beParamSchool + schoolIndex)
                 .then(response => response.json())
                 .then(data => this.setState({courses: data}));
             this.setState({
-                courseNumber: -1,
+                courseIndex: -1,
                 courseType: "",
                 year: -1,
                 curricula: [],
-                curriculumNumber: -1
+                curriculumIndex: -1
             });
 
         }
@@ -69,39 +81,72 @@ class OrarioSyncApp extends React.Component {
             yearNumbers.forEach(i => items.push(yearLabels[i]));
             this.setState({years: items});
         }
-        if ((prevState.courseNumber !== courseNumber && year > 0) || prevState.year !== year) {
-            fetch(beReqUrl + beGetCurricula + schoolNumber + "/" + courseNumber + "/" + year)
+        if ((prevState.courseIndex !== courseIndex && year > 0) || prevState.year !== year) {
+            fetch(beReqUrl + beGetCurricula + beParamSchool + schoolIndex + beParamCourse + courseIndex + beParamYear + year)
                 .then(response => response.json())
                 .then(data => this.setState({curricula: data}));
             this.setState({
                 curricula: [],
-                curriculumNumber: -1
+                curriculumIndex: -1
             });
         }
+        if (prevState.curriculumIndex !== curriculumIndex) {
+            fetch(beReqUrl + beGetClasses + beParamSchool + schoolIndex + beParamCourse + courseIndex + beParamYear + year + beParamCurr + curriculumIndex)
+                .then(response => response.json())
+                .then(data => this.setState({classes: data}));
+            this.setState({
+                classes: [],
+                selectedClasses: [],
+                classesBtm: 0
+            });
+        }
+        if (prevState.selectedClasses !== selectedClasses) {
+            let counts = {};
 
+            for (let i = 0; i < selectedClasses.length; i++) {
+                let num = selectedClasses[i];
+                counts[num] = counts[num] ? counts[num] + 1 : 1;
+            }
+            let newClasses = [];
+            selectedClasses.forEach(item => {
+                if ((counts[item] % 2) !== 0) newClasses.push(item);
+            });
+            let newBtm = 0;
+            newClasses.forEach(item => newBtm = newBtm ^ (1 << item));
+            this.setState({classesBtm: newBtm});
+        }
     }
+
 
     render() {
         const {schools} = this.state;
-        const {schoolNumber} = this.state;
+        const {schoolIndex} = this.state;
         const {courses} = this.state;
         const {courseType} = this.state;
-        const {courseNumber} = this.state;
+        const {courseIndex} = this.state;
         const {year} = this.state;
         const {curricula} = this.state;
-        const {curriculumNumber} = this.state;
+        const {curriculumIndex} = this.state;
+        const {classes} = this.state;
+        const {selectedClasses} = this.state;
+        const {classesBtm} = this.state;
 
         if (!schools.length) return <span>Getting schools...</span>;
         let schoolNames = [];
         schools.forEach(item => schoolNames.push(item.name));
 
-        if (!courses.length && schoolNumber >= 0) return <span>Getting courses...</span>;
+        if (!courses.length && schoolIndex >= 0) return <span>Getting courses...</span>;
         let courseNames = [];
         courses.forEach(item => courseNames.push(item.name));
 
         if (!curricula.length && year >= 0) return <span>Getting curricula...</span>;
         let curriculumNames = [];
         curricula.forEach(item => curriculumNames.push(item.name));
+
+        if (!classes.length && curriculumIndex >= 0) return <span>Getting classes...</span>;
+        let classNames = [];
+        classes.forEach(item => classNames.push(item.name));
+
 
         return (
             <>
@@ -110,9 +155,10 @@ class OrarioSyncApp extends React.Component {
                 <SelectList
                     items={schoolNames}
                     onSelect={selected =>
-                        this.setState({schoolNumber: selected})
+                        this.setState({schoolIndex: selected})
                     }
-                    selected={schoolNumber}
+                    selected={schoolIndex}
+                    multiple={false}
                 />
                 {courses.length &&
                 <>
@@ -120,10 +166,11 @@ class OrarioSyncApp extends React.Component {
                     <SelectList
                         items={courseNames}
                         onSelect={selected => {
-                            this.setState({courseNumber: selected});
+                            this.setState({courseIndex: selected});
                             this.setState({courseType: courseTypeRE.exec(courseNames[selected])[0]});
                         }}
-                        selected={courseNumber}
+                        selected={courseIndex}
+                        multiple={false}
                     />
                 </>}
                 {courseType.length &&
@@ -135,6 +182,7 @@ class OrarioSyncApp extends React.Component {
                             this.setState({year: selected + 1})
                         }
                         selected={year - 1}
+                        multiple={false}
                     />
 
                 </>}
@@ -144,16 +192,30 @@ class OrarioSyncApp extends React.Component {
                     <SelectList
                         items={curriculumNames}
                         onSelect={selected =>
-                            this.setState({curriculumNumber: selected})
+                            this.setState({curriculumIndex: selected})
                         }
-                        selected={curriculumNumber}
+                        selected={curriculumIndex}
+                        multiple={false}
                     />
                 </>}
-                {curriculumNumber >= 0 &&
+                {curriculumIndex >= 0 &&
+                <>
+                    <h2>{classesHeader}</h2>
+                    <SelectList
+                        items={classes}
+                        multiple={true}
+                        onSelect={selected => {
+                            this.setState({selectedClasses: selected});
+                        }}
+                        selected={selectedClasses}
+                    />
+                </>
+                }
+                {classesBtm > 0 &&
                 <div>
                     <button
                         type="button"
-                        onClick={e => window.open(beReqUrl + beGetCalendar + schoolNumber + "/" + courseNumber + "/" + year + "/" + curriculumNumber)}>
+                        onClick={e => window.open(beReqUrl + beGetCalendar + beParamSchool + schoolIndex + beParamCourse + courseIndex + beParamYear + year + beParamCurr + curriculumIndex + beParamClsBtm + classesBtm)}>
                         {buttonContent}
                     </button>
                 </div>}
