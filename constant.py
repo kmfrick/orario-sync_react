@@ -1,6 +1,8 @@
 # url building
 TIMETABLEURLFORMAT = "{}/orario-lezioni/@@orario_reale_json?anno={}&curricula={}"
+TIMETABLEURLFORMATEN = "{}/timetable/@@orario_reale_json?year={}&curricula={}"
 CURRICULAURLFORMAT = "{}/orario-lezioni/@@available_curricula?anno={}"
+CURRICULAURLFORMATEN = "{}/timetable/@@available_curricula?year={}"
 SCHLTYPE = "internal-link"
 CRSSUFF = "/corsi/corsi-di-studio"
 
@@ -19,7 +21,6 @@ CURRNAME = "label"
 CURRCRS = "corso"
 CRSNAME = "name"
 CRSURL = "url"
-
 
 # html info
 COURSELINK = "Sito del Corso"
@@ -40,3 +41,10 @@ CURRPOS = 3
 
 # list of schools
 SCHOOLSURL = "https://www.unibo.it/it/ateneo/sedi-e-strutture/scuole"
+
+# flask arguments
+ARG_CURR = "curr"
+ARG_YEAR = "year"
+ARG_COURSE = "course"
+ARG_SCHOOL = "school"
+ARG_CLASSES = "classes"

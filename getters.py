@@ -25,17 +25,15 @@ def get_school_links():
     return school_links
 
 
-def get_school_url(school_links, school_number):
-    school_url = school_links[school_number]["link"]
-    if school_url[-3:] != "/it": school_url += "/it"
+def get_school_url(school_links, school_index):
+    school_url = school_links[school_index]["link"]
+    if school_url[-3:] != "/it":
+        school_url += "/it"
     return school_url
 
 
 def get_course_list(school_url):
-    # get url for list of courses
     course_list_url = school_url + constant.CRSSUFF
-
-    # generate sorted list of courses
     resp = requests.get(course_list_url)
     soup = BeautifulSoup(resp.content, from_encoding=get_encoding(resp), features="html5lib")
 
@@ -62,7 +60,11 @@ def get_course_code(course_list, course_number):
 
 def get_curricula(course_url, year):
     curricula = []
-    for curr in requests.get(constant.CURRICULAURLFORMAT.format(course_url, year)).json():
+    if "cycle" in course_url:
+        curricula_req_url = constant.CURRICULAURLFORMATEN.format(course_url, year)
+    else:
+        curricula_req_url = constant.CURRICULAURLFORMAT.format(course_url, year)
+    for curr in requests.get(curricula_req_url).json():
         curricula.append({"code": curr[constant.CURRVAL], "name": curr[constant.CURRNAME]})
     return curricula
 
@@ -81,22 +83,30 @@ def get_timetable(course_url, year, curriculum):
     return req.json()
 
 
-def get_ical_file(timetable):
+def get_classes(course_url, year, curriculum):
+    classes = []
+    for _class in get_timetable(course_url, year, curriculum)["insegnamenti"]:
+        classes.append(_class[1])
+    return classes
+
+
+def get_ical_file(timetable, classes):
     cal = Calendar()
     for e in timetable[constant.EVENTS]:
         title = e[constant.TITLE]
-        if e[constant.ROOMS]:
-            location = e[constant.ROOMS][0][constant.CLASSROOM] + ", " + e[constant.ROOMS][0][constant.CAMPUS]
-        else:
-            location = constant.NO_LOC_AVAILABLE
-        start = dateutil.parser.parse(e[constant.START])
-        end = dateutil.parser.parse(e[constant.END])
-        event = Event()
-        event.add('summary', title)
-        event.add('dtstart', start)
-        event.add('dtend', end)
-        event.add('location', location)
-        cal.add_component(event)
+        if title in classes:
+            if e[constant.ROOMS]:
+                location = e[constant.ROOMS][0][constant.CLASSROOM] + ", " + e[constant.ROOMS][0][constant.CAMPUS]
+            else:
+                location = constant.NO_LOC_AVAILABLE
+            start = dateutil.parser.parse(e[constant.START])
+            end = dateutil.parser.parse(e[constant.END])
+            event = Event()
+            event.add("summary", title)
+            event.add("dtstart", start)
+            event.add("dtend", end)
+            event.add("location", location)
+            cal.add_component(event)
     return cal.to_ical()
 
 
