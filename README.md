@@ -29,8 +29,9 @@ Un'interfaccia basata su React è disponibile all'indirizzo <http://kmfrick.gith
   * args: school, course_number, year
   
 - /getclasses
-    * Gets a list of the available for the selected course, year and curriculum
-    * Genera una lista dei corsi disponibili per il corso di studi, nell'anno e per il curriculum selezionati 
+        * Gets a list of the available for the selected course, year and curriculum
+        * Genera una lista dei corsi disponibili per il corso di studi, nell'anno e per il curriculum selezionati
+        * args: school, course_number, year, curr
 
 - /getical
   * Generates the iCal file with the schedule for the selected course/year/curriculum, with only the selected classes included
