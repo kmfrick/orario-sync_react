@@ -1,5 +1,7 @@
 import re
+from datetime import timedelta
 
+import dateparser
 import dateutil.parser
 import requests
 from bs4 import BeautifulSoup
@@ -17,20 +19,21 @@ def get_encoding(resp):
     return encoding
 
 
-def get_classes_no_json(course_url):
+def get_classes_no_json(course_url, year, curr):
     """Gets a list of classes for courses that do not use a JSON timetable
 
-    As of 2018-11-13 their names are the content of list items in a form with id tag constant.CLSNOJSONFORMID"""
-    resp = requests.get(course_url)
+    As of 2018-11-13 their names are the content of <li> tags in a <form> tag with id=constant.CLSNOJSONFORMID"""
+    classes_url = constant.TIMETABLEURLFORMATNOJSON[get_course_lang(course_url)].format(course_url, year, curr)
+    resp = requests.get(classes_url)
     soup = BeautifulSoup(resp.content, from_encoding=get_encoding(resp), features="html5lib")
     classes = []
-    print(course_url)
     for li in soup.find("form", id=constant.CLSNOJSONFORMID).find_all("li"):
         classes.append(li.contents[constant.CLSLABELPOS].contents[0])
     return classes
 
 
 def get_location_no_json(i, soup):
+    """Gets location info for courses that do not use a JSON timetable"""
     location_data = soup.find("div", id="panel{}".format(i)).find("div").contents
     classroom_name = location_data[0].lstrip().rstrip()
     classroom_info = location_data[1].find("div")
@@ -40,12 +43,16 @@ def get_location_no_json(i, soup):
     return classroom_name
 
 
-def get_class_period_no_json(i, soup):
+def get_class_periods_no_json(i, soup):
     """Gets the dates of the first and last lessons of a certain class for courses that do not use a JSON timetable
 
     As of 2018-11-13 they are saved as the content of the first <p> tag inside a <div> with id equal to panel{index}
+    Since a class can last two semesters with winter break in between, it returns an array
     """
-    return soup.find("div", id="panel{}".format(i)).find("p").contents[0].split("\n")
+    periods = []
+    for period in soup.find("div", id="panel{}".format(i)).find_all("p"):
+        periods.append(period.contents[0].split("\n"))
+    return periods
 
 
 def get_class_name_no_json(i, soup):
@@ -58,33 +65,36 @@ def get_class_name_no_json(i, soup):
 def get_lessons_no_json(i, soup):
     """Gets days of week and times a certain class is held for courses that do not use a JSON timetable
 
-        As of 2018-11-13 they are saved as <td> elements inside a <div> with id equal to panel{index},
-         with the following pattern repeating every 4 lines:
+        As of 2018-11-13 they are saved as <td> elements inside a <table class=constant.TIMETABLETBLCLASS>
+        inside a <div id=panel{index}>, with the following pattern repeating every 4 lines:
         1) day of week (dict field: constant.DOWFLD)
         2) timeframe expressed as "start_time - end_time" (df: constant.LSN(START|END)FLD
         3) teacher's name (df: constant.TEACHERFLD)
         4) blank line
         Returns a dict using 4 keys in the order above (no blank line of course, start and end times are separate)"""
-    class_timetable = soup.find("div", id="panel{}".format(i)).find_all("td")
+    class_timetables = soup.find("div", id="panel{}".format(i)).find_all("table", class_=constant.TIMETABLETBLCLASS)
     class_lessons = []
-    lesson = constant.DEFLSN
-    for (j, class_time) in enumerate(class_timetable, 0):
-        class_info = class_time.contents[0].lstrip().rstrip()
-        if j % 4 == 0:
-            lesson = constant.DEFLSN
-            lesson[constant.DOWFLD] = class_info.lstrip().rstrip()
-        if j % 4 == 1:
-            timesplit = class_info.split(" - ")
-            lesson[constant.LSNSTARTFLD] = timesplit[0].lstrip().rstrip()
-            lesson[constant.LSNENDFLD] = timesplit[1].lstrip().rstrip()
-        if j % 4 == 2:
-            lesson[constant.TEACHERFLD] = class_info.lstrip().rstrip()
-            class_lessons.append(lesson)
+
+    for class_timetable in class_timetables:
+        period_lessons = []
+        for (j, class_time) in enumerate(class_timetable.find("tbody").find_all("td"), 0):
+            class_info = class_time.contents[0].lstrip().rstrip()
+            if j % 4 == 0:
+                lesson = {}
+                lesson[constant.DOWFLD] = class_info.lstrip().rstrip()
+            if j % 4 == 1:
+                timesplit = class_info.split(" - ")
+                lesson[constant.LSNSTARTFLD] = timesplit[0].lstrip().rstrip()
+                lesson[constant.LSNENDFLD] = timesplit[1].lstrip().rstrip()
+            if j % 4 == 2:
+                lesson[constant.TEACHERFLD] = class_info.lstrip().rstrip()
+                period_lessons.append(lesson)
+        class_lessons.append(period_lessons[:])
     return class_lessons
 
 
 def get_timetable_no_json(course_url, year, curr):
-    """Encodes the timetable of a course that does not use a JSON timetablea vaguely sane format
+    """Encodes the timetable of a course that does not use a JSON timetable in a vaguely sane format
 
     Dictionary fields:
     -   constant.NAMEFLD: name of the class
@@ -97,15 +107,17 @@ def get_timetable_no_json(course_url, year, curr):
     resp = requests.get(timetable_url)
     soup = BeautifulSoup(resp.content, from_encoding=get_encoding(resp), features="html5lib")
     classes = []
-    for i in range(0, len(get_classes_no_json(timetable_url))):
+    available_classes = get_classes_no_json(course_url, year, curr)
+    for i in range(0, len(available_classes)):
         class_name = get_class_name_no_json(i, soup)
-        class_period = get_class_period_no_json(i, soup)
+        class_periods = get_class_periods_no_json(i, soup)
         classroom_name = get_location_no_json(i, soup)
         class_lessons = get_lessons_no_json(i, soup)
-        _class = {constant.NAMEFLD: class_name, constant.CLSSTARTFLD: class_period[2].lstrip()[:-2],
-                  constant.CLSENDFLD: class_period[3].lstrip(),
-                  constant.LOCATIONFLD: classroom_name, constant.LESSONSFLD: class_lessons}
-        classes.append(_class)
+        for period, period_lessons in zip(class_periods, class_lessons):
+            _class = {constant.NAMEFLD: class_name, constant.CLSSTARTFLD: period[2].lstrip()[:-2],
+                      constant.CLSENDFLD: period[3].lstrip(), constant.LOCATIONFLD: classroom_name,
+                      constant.LESSONSFLD: period_lessons}
+            classes.append(_class)
     return classes
 
 
@@ -177,8 +189,8 @@ def get_curricula(course_url, year):
     """Encodes the available curricula for a given course in a given year in a vaguely sane format
 
     Dictionary fields:
-    -   constant.CODEFLD: curriculum code as used in JSON requests
-    -   constant.NAMEFLD: human-readable curriculum name"""
+    -   constant.CODEFLD: curr code as used in JSON requests
+    -   constant.NAMEFLD: human-readable curr name"""
     curricula = []
     curricula_req_url = constant.CURRICULAURLFORMAT[get_course_lang(course_url)].format(course_url, year)
     for curr in requests.get(curricula_req_url).json():
@@ -186,14 +198,14 @@ def get_curricula(course_url, year):
     return curricula
 
 
-def get_curriculum_name(curricula, curriculum_index):
-    """Getter function to get a curriculum's name without directly accessing the dictionary"""
-    return curricula[curriculum_index][constant.NAMEFLD]
+def get_curr_name(curricula, curr_index):
+    """Getter function to get a curr's name without directly accessing the dictionary"""
+    return curricula[curr_index][constant.NAMEFLD]
 
 
-def get_curriculum_code(curricula, curriculum_index):
-    """Getter function to get a curriculum's internal code without directly accessing the dictionary"""
-    return curricula[curriculum_index][constant.CODEFLD]
+def get_curr_code(curricula, curr_index):
+    """Getter function to get a curr's internal code without directly accessing the dictionary"""
+    return curricula[curr_index][constant.CODEFLD]
 
 
 def encode_json_timetable(raw_timetable):
@@ -201,7 +213,7 @@ def encode_json_timetable(raw_timetable):
 
     Dictionary fields:
     -   constant.NAMEFLD: class name
-    -   constant.LSNSTARTFLD: datetime object with lessonstart time
+    -   constant.LSNSTARTFLD: datetime object with lesson start time
     -   constant.LSNENDFLD: datetime object with lesson end time
     -   constant.LOCATIONFLD: where the lesson is held, if available
     """
@@ -219,36 +231,99 @@ def encode_json_timetable(raw_timetable):
     return lessons
 
 
+def date_range(start_date, end_date):
+    """Gets a range of dates as array"""
+    for n in range(int((end_date - start_date).days)):
+        yield start_date + timedelta(n)
 
 
+def encode_no_json_timetable(raw_timetable):
+    """Encodes a non-JSON timetable in the same vaguely sane format
 
-def get_timetable(course_url, year, curriculum):
-    """Checks if the selected course uses a JSON calendar or not and calls the appropriate get_timetable function"""
-    if (has_json_timetable(course_url)):
-        timetable_url = constant.TIMETABLEURLFORMAT[get_course_lang(course_url)].format(course_url, year, curriculum)
+        Dictionary fields:
+        -   constant.NAMEFLD: class name
+        -   constant.LSNSTARTFLD: datetime object with lesson start time
+        -   constant.LSNENDFLD: datetime object with lesson end time
+        -   constant.LOCATIONFLD: where the lesson is held, if available
+        """
+    days_of_week_it = ["lunedì", "martedì", "mercoledì", "giovedì", "venerdì", "sabato", "domenica"]
+    lessons = []
+    for _class in raw_timetable:
+        title = _class[constant.NAMEFLD]
+        location = _class[constant.LOCATIONFLD]
+        class_first_lesson = dateparser.parse(_class[constant.LSNSTARTFLD], languages=["it"])
+        class_last_lesson = dateparser.parse(_class[constant.LSNENDFLD], languages=["it"])
+        class_period = date_range(class_first_lesson, class_last_lesson)
+        for period_date in class_period:
+            weekday = period_date.weekday()
+            for lesson in _class[constant.LESSONSFLD]:
+                starthr = int(lesson[constant.LSNSTARTFLD].split(":")[0])
+                startmm = int(lesson[constant.LSNSTARTFLD].split(":")[1])
+                endhr = int(lesson[constant.LSNENDFLD].split(":")[0])
+                endmm = int(lesson[constant.LSNENDFLD].split(":")[1])
+                lesson_weekday = days_of_week_it.index(lesson[constant.DOWFLD].lower())
+                if weekday == lesson_weekday:
+                    startdatetime = period_date.replace(hour=starthr, minute=startmm)
+                    enddatetime = period_date.replace(hour=endhr, minute=endmm)
+                    lessons.append(
+                        {constant.NAMEFLD: title, constant.LSNSTARTFLD: startdatetime, constant.LSNENDFLD: enddatetime,
+                         constant.LOCATIONFLD: location})
+    return lessons
+
+
+def has_json_timetable(course_url):
+    """Checks if a course uses a JSON timetable
+
+    As of 2018-11-13, if a course uses a JSON timetable it has a <div id="calendar"> in its timetable page"""
+    page_url = constant.CHECKJSONURLFORMAT[get_course_lang(course_url)].format(course_url)
+    resp = requests.get(page_url)
+    soup = BeautifulSoup(resp.content, from_encoding=get_encoding(resp), features="html5lib")
+    hjt = (soup.find("div", id="calendar") is not None)
+    return hjt
+
+
+def get_timetable(course_url, year, curr):
+    """Checks if the selected course uses a JSON calendar and calls the appropriate get_timetable function"""
+    if has_json_timetable(course_url):
+        timetable_url = constant.TIMETABLEURLFORMAT[get_course_lang(course_url)].format(course_url, year, curr)
         req = requests.get(url=timetable_url)
-        timetable = req.json()
+        timetable = encode_json_timetable(req.json())
     else:
-        timetable = get_timetable_no_json(course_url, year, curriculum)
+        timetable = encode_no_json_timetable(get_timetable_no_json(course_url, year, curr))
     return timetable
 
 
-def get_classes(course_url, year, curriculum):
+def get_classes_json(course_url, year, curr):
+    """Gets a list of classes from a JSON timetable
+
+    As of 2018-11-13, JSON timetables have a constant.CLASSES field which holds an array of classes;
+    its index 1 is the class's name"""
+    resp = requests.get(constant.TIMETABLEURLFORMAT[get_course_lang(course_url)].format(course_url, year, curr))
     classes = []
-    for _class in get_timetable(course_url, year, curriculum)[constant.CLASSES]:
+    for _class in resp.json()[constant.CLASSES]:
         classes.append(_class[1])
     return classes
 
 
+def get_classes(course_url, year, curr):
+    """Checks if the selected course uses a JSON calendar and calls the appropriate get_classes() function"""
+    if has_json_timetable(course_url):
+        return get_classes_json(course_url, year, curr)
+    else:
+        return get_classes_no_json(course_url, year, curr)
+
+
 def get_ical_file(timetable, classes):
+    """Creates an iCalendar file with the timetable as requested"""
     cal = Calendar()
     for lesson in timetable:
-        event = Event()
-        event.add(constant.ICALTITLE, title)
-        event.add(constant.ICALSTART, start)
-        event.add(constant.ICALEND, end)
-        event.add(constant.ICALLOCATION, location)
-        ical.add_component(event)
+        if lesson[constant.NAMEFLD] in classes:
+            event = Event()
+            event.add(constant.ICALTITLE, lesson[constant.NAMEFLD])
+            event.add(constant.ICALSTART, lesson[constant.LSNSTARTFLD])
+            event.add(constant.ICALEND, lesson[constant.LSNENDFLD])
+            event.add(constant.ICALLOCATION, lesson[constant.LOCATIONFLD])
+            cal.add_component(event)
     return cal.to_ical()
 
 
@@ -257,6 +332,3 @@ def get_safe_course_name(name):
 
     Strips special characters and removes digits to remove the internal code from the course's name"""
     return "".join([c for c in name if c.isalpha() and not c.isdigit()]).rstrip()
-
-
-encode_no_json_timetable(get_timetable_no_json("https://corsi.unibo.it/laurea/lettere", 2, "947-000"))

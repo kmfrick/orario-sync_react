@@ -44,7 +44,7 @@ def getclasses():
     course_list = get_course_list(school_url)
     course_url = get_course_url(course_list, course_index)
     curricula = get_curricula(course_url, year)
-    curr = get_curriculum_code(curricula, curr_index)
+    curr = get_curr_code(curricula, curr_index)
     return jsonify(get_classes(course_url, year, curr))
 
 
@@ -59,7 +59,7 @@ def gettimetablenojson():
     course_list = get_course_list(school_url)
     course_url = get_course_url(course_list, course_index)
     curricula = get_curricula(course_url, year)
-    curr = get_curriculum_code(curricula, curr_index)
+    curr = get_curr_code(curricula, curr_index)
     return jsonify(get_timetable_no_json(course_url, year, curr))
 
 @app.route("/getical")
@@ -75,7 +75,7 @@ def getical():
     course_name = get_safe_course_name(get_course_name(course_list, course_index))
     course_url = get_course_url(course_list, course_index)
     curricula = get_curricula(course_url, year)
-    curr_index = get_curriculum_code(curricula, curr_index)
+    curr_index = get_curr_code(curricula, curr_index)
     timetable = get_timetable(course_url, year, curr_index)
     selected_classes_btm = request.args.get(constant.ARG_CLASSES, type=int)  # bitmask.
     classes = get_classes(course_url, year, curr_index)

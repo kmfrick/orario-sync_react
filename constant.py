@@ -3,12 +3,15 @@ CRSLANG_IT = "it"
 CRSLANG_EN = "en"
 
 # url building
+
 TIMETABLEURLFORMAT = {CRSLANG_IT: "{}/orario-lezioni/@@orario_reale_json?anno={}&curricula={}",
                       CRSLANG_EN: "{}/timetable/@@orario_reale_json?year={}&curricula={}"}
 CURRICULAURLFORMAT = {CRSLANG_IT: "{}/orario-lezioni/@@available_curricula?anno={}",
                       CRSLANG_EN: "{}/timetable/@@available_curricula?year={}"}
 TIMETABLEURLFORMATNOJSON = {CRSLANG_IT: "{}/orario-lezioni?calendar_view=&date=&anno={}&curricula={}",
                             CRSLANG_EN: "{}/timetable?calendar_view=&date=&anno={}&curricula={}"}
+CHECKJSONURLFORMAT = {CRSLANG_IT: "{}/orario-lezioni",
+                      CRSLANG_EN: "{}/timetable"}
 SCHLTYPE = "internal-link"
 CRSSUFF = "/corsi/corsi-di-studio"
 
@@ -34,6 +37,7 @@ COURSELINK = "Sito del Corso"
 COURSENAMETAG = "data-title"
 CLSLABELPOS = 3
 CLSNOJSONFORMID = "insegnamenti-popup"
+TIMETABLETBLCLASS = "timetable"
 
 # error handling
 NOTFOUND = "NOTFOUND"

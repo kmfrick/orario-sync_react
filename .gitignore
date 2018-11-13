@@ -5,7 +5,6 @@ __pycache__/
 Dockerfile
 now.json
 requirements.txt
-orario-sync.ini
 
 *.ics
 *.pyc
