@@ -44,9 +44,23 @@ def getclasses():
     course_list = get_course_list(school_url)
     course_url = get_course_url(course_list, course_index)
     curricula = get_curricula(course_url, year)
-    curr_index = get_curriculum_code(curricula, curr_index)
-    return jsonify(get_classes(course_url, year, curr_index))
+    curr = get_curriculum_code(curricula, curr_index)
+    return jsonify(get_classes(course_url, year, curr))
 
+
+@app.route("/gettimetablenojson")
+def gettimetablenojson():
+    school_index = request.args.get(constant.ARG_SCHOOL, type=int)
+    course_index = request.args.get(constant.ARG_COURSE, type=int)
+    year = request.args.get(constant.ARG_YEAR, type=int)
+    curr_index = request.args.get(constant.ARG_CURR, type=int)
+    school_links = get_school_links()
+    school_url = get_school_url(school_links, school_index)
+    course_list = get_course_list(school_url)
+    course_url = get_course_url(course_list, course_index)
+    curricula = get_curricula(course_url, year)
+    curr = get_curriculum_code(curricula, curr_index)
+    return jsonify(get_timetable_no_json(course_url, year, curr))
 
 @app.route("/getical")
 def getical():
@@ -72,7 +86,7 @@ def getical():
     calendar = get_ical_file(timetable, selected_classes)
     filename = "{}_{}_{}.ics".format(course_name, course_code, year)
 
-    ical = open(filename, 'wb')
+    ical = open(filename, "wb")
     ical.write(calendar)
     ical.close()
 

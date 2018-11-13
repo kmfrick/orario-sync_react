@@ -1,8 +1,14 @@
+# language
+CRSLANG_IT = "it"
+CRSLANG_EN = "en"
+
 # url building
-TIMETABLEURLFORMAT = "{}/orario-lezioni/@@orario_reale_json?anno={}&curricula={}"
-TIMETABLEURLFORMATEN = "{}/timetable/@@orario_reale_json?year={}&curricula={}"
-CURRICULAURLFORMAT = "{}/orario-lezioni/@@available_curricula?anno={}"
-CURRICULAURLFORMATEN = "{}/timetable/@@available_curricula?year={}"
+TIMETABLEURLFORMAT = {CRSLANG_IT: "{}/orario-lezioni/@@orario_reale_json?anno={}&curricula={}",
+                      CRSLANG_EN: "{}/timetable/@@orario_reale_json?year={}&curricula={}"}
+CURRICULAURLFORMAT = {CRSLANG_IT: "{}/orario-lezioni/@@available_curricula?anno={}",
+                      CRSLANG_EN: "{}/timetable/@@available_curricula?year={}"}
+TIMETABLEURLFORMATNOJSON = {CRSLANG_IT: "{}/orario-lezioni?calendar_view=&date=&anno={}&curricula={}",
+                            CRSLANG_EN: "{}/timetable?calendar_view=&date=&anno={}&curricula={}"}
 SCHLTYPE = "internal-link"
 CRSSUFF = "/corsi/corsi-di-studio"
 
@@ -21,17 +27,17 @@ CURRNAME = "label"
 CURRCRS = "corso"
 CRSNAME = "name"
 CRSURL = "url"
+CLASSES = "insegnamenti"
 
 # html info
 COURSELINK = "Sito del Corso"
 COURSENAMETAG = "data-title"
+CLSLABELPOS = 3
+CLSNOJSONFORMID = "insegnamenti-popup"
 
 # error handling
 NOTFOUND = "NOTFOUND"
 NO_LOC_AVAILABLE = "No location data available"
-
-# config filename
-CONFNAME = "orario-sync.ini"
 
 # config fields
 URLPOS = 0
@@ -48,3 +54,25 @@ ARG_YEAR = "year"
 ARG_COURSE = "course"
 ARG_SCHOOL = "school"
 ARG_CLASSES = "classes"
+
+# custom dictionary keys
+CLSENDFLD = "end"
+CLSSTARTFLD = "start"
+LSNENDFLD = "end"
+LSNSTARTFLD = "start"
+TEACHERFLD = "teacher"
+DOWFLD = "day"
+NAMEFLD = "name"
+CODEFLD = "code"
+LINKFLD = "link"
+LESSONSFLD = "lessons"
+LOCATIONFLD = "location"
+
+# ical file properties
+ICALLOCATION = "location"
+ICALEND = "dtend"
+ICALSTART = "dtstart"
+ICALTITLE = "summary"
+
+# template for lesson dict
+DEFLSN = {DOWFLD: "", CLSSTARTFLD: "", CLSENDFLD: "", TEACHERFLD: ""}
