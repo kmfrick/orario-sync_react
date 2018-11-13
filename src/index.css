@@ -78,6 +78,7 @@ ul {
 
 body {
     padding: 3em;
+    border: 2em solid #eeeeee;
 }
 
 .demo > div {

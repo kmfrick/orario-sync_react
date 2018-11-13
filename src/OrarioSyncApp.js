@@ -1,8 +1,8 @@
-//TODO: background color based on school
 //TODO: autoscroll
 
 import React from "react";
 import SelectList from "./SelectList";
+import BitSet from "bitset"
 
 const beReqUrl = "http://localhost:5000";
 const beParamSchool = "?school=";
@@ -43,7 +43,10 @@ class OrarioSyncApp extends React.Component {
         curriculumIndex: -1,
         classes: [],
         selectedClasses: [],
-        classesBtm: 0
+        classesBtm: BitSet.fromBinaryString("0"),
+        listBgColor: "#fafafa",
+        listTextColor: "#000000",
+        listSelColor: "#d7e7ff"
     };
 
     componentDidMount() {
@@ -55,7 +58,8 @@ class OrarioSyncApp extends React.Component {
     }
 
     componentDidUpdate(prevProps, prevState) {
-
+        const colors = ["#AA005F", "#EFAA00", "#FF7D18", "#0066A3", "#00857E", "#FFFFFF", "#00539F",
+            "#CE1126", "#8B2346", "#008633", "#3E2782"];
         const schoolIndex = this.state.schoolIndex;
         const courseIndex = this.state.courseIndex;
         const courseType = this.state.courseType;
@@ -73,6 +77,7 @@ class OrarioSyncApp extends React.Component {
                 curricula: [],
                 curriculumIndex: -1
             });
+            document.body.style.borderColor = colors[schoolIndex];
 
         }
         if (prevState.courseType !== courseType) {
@@ -97,7 +102,7 @@ class OrarioSyncApp extends React.Component {
             this.setState({
                 classes: [],
                 selectedClasses: [],
-                classesBtm: 0
+                classesBtm: BitSet.fromBinaryString("0")
             });
         }
         if (prevState.selectedClasses !== selectedClasses) {
@@ -111,8 +116,8 @@ class OrarioSyncApp extends React.Component {
             selectedClasses.forEach(item => {
                 if ((counts[item] % 2) !== 0) newClasses.push(item);
             });
-            let newBtm = 0;
-            newClasses.forEach(item => newBtm = newBtm ^ (1 << item));
+            let newBtm = BitSet.fromBinaryString("0");
+            newClasses.forEach(item => newBtm.flip(item));
             this.setState({classesBtm: newBtm});
         }
     }
@@ -130,6 +135,10 @@ class OrarioSyncApp extends React.Component {
         const {classes} = this.state;
         const {selectedClasses} = this.state;
         const {classesBtm} = this.state;
+        const listStyle = {
+            backgroundColor: this.state.listBgColor,
+            color: this.state.listTextColor,
+        };
 
         if (!schools.length) return <span>Getting schools...</span>;
         let schoolNames = [];
@@ -159,6 +168,7 @@ class OrarioSyncApp extends React.Component {
                     }
                     selected={schoolIndex}
                     multiple={false}
+                    style={listStyle}
                 />
                 {courses.length &&
                 <>
@@ -215,7 +225,7 @@ class OrarioSyncApp extends React.Component {
                 <div>
                     <button
                         type="button"
-                        onClick={e => window.open(beReqUrl + beGetCalendar + beParamSchool + schoolIndex + beParamCourse + courseIndex + beParamYear + year + beParamCurr + curriculumIndex + beParamClsBtm + classesBtm)}>
+                        onClick={e => window.open(beReqUrl + beGetCalendar + beParamSchool + schoolIndex + beParamCourse + courseIndex + beParamYear + year + beParamCurr + curriculumIndex + beParamClsBtm + classesBtm.toString(10))}>
                         {buttonContent}
                     </button>
                 </div>}

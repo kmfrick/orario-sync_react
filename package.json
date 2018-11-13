@@ -8,14 +8,15 @@
     "react": "^16.6.1",
     "react-dom": "^16.6.1",
     "react-list-select": "^0.4.0",
-    "react-scripts": "2.1.1"
+    "react-scripts": "2.1.1",
+    "bitset": "5.0.3"
   },
   "scripts": {
     "start": "react-scripts start",
     "build": "react-scripts build",
     "test": "react-scripts test",
-	"predeploy": "npm run build",
-	"deploy": "gh-pages -d build",
+    "predeploy": "npm run build",
+    "deploy": "gh-pages -d build",
     "eject": "react-scripts eject"
   },
   "eslintConfig": {
