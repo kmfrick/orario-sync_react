@@ -1,7 +1,7 @@
+import datetime
 import re
 from datetime import timedelta
 
-import dateparser
 import dateutil.parser
 import requests
 from bs4 import BeautifulSoup
@@ -237,6 +237,17 @@ def date_range(start_date, end_date):
         yield start_date + timedelta(n)
 
 
+def parse_italian_date(date_str):
+    """Parses an Italian date in the form \"dd monthlongname yyyy\""""
+    italian_months = ["gennaio", "febbraio", "marzo", "aprile", "maggio", "giugno", "luglio", "agosto", "settembre",
+                      "ottobre", "novembre", "dicembre"]
+    fields = date_str.split(" ")
+    dd = int(fields[0])
+    mmmm = italian_months.index(fields[1]) + 1
+    yyyy = int(fields[2])
+    return datetime.datetime(yyyy, mmmm, dd)
+
+
 def encode_no_json_timetable(raw_timetable):
     """Encodes a non-JSON timetable in the same vaguely sane format
 
@@ -251,8 +262,8 @@ def encode_no_json_timetable(raw_timetable):
     for _class in raw_timetable:
         title = _class[constant.NAMEFLD]
         location = _class[constant.LOCATIONFLD]
-        class_first_lesson = dateparser.parse(_class[constant.LSNSTARTFLD], languages=["it"])
-        class_last_lesson = dateparser.parse(_class[constant.LSNENDFLD], languages=["it"])
+        class_first_lesson = parse_italian_date(_class[constant.LSNSTARTFLD])
+        class_last_lesson = parse_italian_date(_class[constant.LSNENDFLD])
         class_period = date_range(class_first_lesson, class_last_lesson)
         for period_date in class_period:
             weekday = period_date.weekday()

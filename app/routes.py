@@ -62,6 +62,7 @@ def gettimetablenojson():
     curr = get_curr_code(curricula, curr_index)
     return jsonify(get_timetable_no_json(course_url, year, curr))
 
+
 @app.route("/getical")
 def getical():
     school_index = request.args.get(constant.ARG_SCHOOL, type=int)

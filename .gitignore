@@ -9,3 +9,5 @@ requirements.txt
 *.ics
 *.pyc
 *.html
+
+.nowignore
