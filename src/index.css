@@ -131,6 +131,6 @@ body {
 
 footer {
     display: block;
-    padding: 25em;
+    margin-top: 25em;
     font-size: 0.2em;
 }
