@@ -10,11 +10,11 @@ const beParamCourse = "&course=";
 const beParamYear = "&year=";
 const beParamCurr = "&curr=";
 const beParamClsBtm = "&classes=";
-const beGetSchools = "/getschools";
-const beGetCourses = "/getcourses";
-const beGetCurricula = "/getcurricula";
-const beGetClasses = "/getclasses";
-const beGetCalendar = "/getical";
+const beGetSchools = "/getschools.py";
+const beGetCourses = "/getcourses.py";
+const beGetCurricula = "/getcurricula.py";
+const beGetClasses = "/getclasses.py";
+const beGetCalendar = "/getical.py";
 
 const durations = {"[LMCU]": 6, "[L]": 3, "[LM]": 2, "": 0};
 const yearLabels = ["Primo", "Secondo", "Terzo", "Quarto", "Quinto", "Sesto"];
