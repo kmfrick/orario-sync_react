@@ -11,6 +11,38 @@ from icalendar import Calendar, Event
 import constant
 
 
+def get_args_from_url(requestline):
+    """Parses arguments from a given URL"""
+    line = str(requestline)
+    method, _, rest = line.partition(" ")
+    url, _, protocol = rest.rpartition(" ")
+    try:
+        school_index = int(url.split(constant.ARG_SCHOOL + "=")[1].split("&")[0])
+    except IndexError:
+        school_index = 0
+    try:
+        course_index = int(url.split(constant.ARG_COURSE + "=")[1].split("&")[0])
+    except IndexError:
+        course_index = 0
+    try:
+        year = int(url.split(constant.ARG_YEAR + "=")[1].split("&")[0])
+    except IndexError:
+        year = 0
+    try:
+        curr_index = int(url.split(constant.ARG_CURR + "=")[1].split("&")[0])
+    except IndexError:
+        curr_index = 0
+    try:
+        selected_classes_btm = int(url.split(constant.ARG_CLASSES + "=")[1].split("&")[0])
+    except IndexError:
+        selected_classes_btm = 0
+    return {constant.ARG_COURSE: course_index,
+            constant.ARG_CURR: curr_index,
+            constant.ARG_SCHOOL: school_index,
+            constant.ARG_CLASSES: selected_classes_btm,
+            constant.ARG_YEAR: year}
+
+
 def get_encoding(resp):
     """Gets the encoding used in a webpage"""
     http_encoding = resp.encoding if "charset" in resp.headers.get("content-type", "").lower() else None
@@ -58,7 +90,7 @@ def get_class_periods_no_json(i, soup):
 def get_class_name_no_json(i, soup):
     """Gets the name of a class for courses that do not use a JSON timetable
 
-    As of 2018-11-13 it's saved as the content of an <h3> tag with id equal to tab{index}"""
+    As of 2018-11-13 it\'s saved as the content of an <h3> tag with id equal to tab{index}"""
     return soup.find("h3", id="tab{}".format(i)).find("a").contents[2].lstrip().rstrip()
 
 
@@ -69,7 +101,7 @@ def get_lessons_no_json(i, soup):
         inside a <div id=panel{index}>, with the following pattern repeating every 4 lines:
         1) day of week (dict field: constant.DOWFLD)
         2) timeframe expressed as "start_time - end_time" (df: constant.LSN(START|END)FLD
-        3) teacher's name (df: constant.TEACHERFLD)
+        3) teacher\'s name (df: constant.TEACHERFLD)
         4) blank line
         Returns a dict using 4 keys in the order above (no blank line of course, start and end times are separate)"""
     class_timetables = soup.find("div", id="panel{}".format(i)).find_all("table", class_=constant.TIMETABLETBLCLASS)
@@ -101,7 +133,7 @@ def get_timetable_no_json(course_url, year, curr):
     -   constant.CLS(START|END)FLD: first|lass lessons of a certain class
     -   constant.LOCATIONFLD: where the class is held (the same every day that class is held)
     -   constant.LESSONSFLD: array of dicts describing the days and times a certain class is held
-    The 4th field's dict fields are as returned by get_lessons_no_json()
+    The 4th field\'s dict fields are as returned by get_lessons_no_json()
     """
     timetable_url = constant.TIMETABLEURLFORMATNOJSON[get_course_lang(course_url)].format(course_url, year, curr)
     resp = requests.get(timetable_url)
@@ -122,7 +154,7 @@ def get_timetable_no_json(course_url, year, curr):
 
 
 def get_school_links():
-    """Gets a list of unibo's schools parsing a webpage"""
+    """Gets a list of unibo\'s schools parsing a webpage"""
     resp = requests.get(constant.SCHOOLSURL)
     soup = BeautifulSoup(resp.content, from_encoding=get_encoding(resp), features="html5lib")
     school_links = []
@@ -134,7 +166,7 @@ def get_school_links():
 def get_school_url(school_links, school_index):
     """Ensures all school URLs are in the same format and end with  "/it"
 
-    If this is not checked for, every function that uses a school's URL will fail because most of the webpages
+    If this is not checked for, every function that uses a school\'s URL will fail because most of the webpages
     are under the /it (or /en) subfolder"""
     school_url = school_links[school_index][constant.LINKFLD]
     if school_url[-3:] != "/it":
@@ -145,12 +177,12 @@ def get_school_url(school_links, school_index):
 def get_course_list(school_url):
     """Gets a list of courses for a given school
 
-    As of 2018-11-13, every school's course list is under the constant.CRSSUFF subfolder. <a> tags holding
+    As of 2018-11-13, every school\'s course list is under the constant.CRSSUFF subfolder. <a> tags holding
     course URLs have constant.COURSENAMETAG as text
     Dictionary fields:
     -   constant.CODEFLD: course code for internal use
     -   constant.NAMEFLD: course name
-    -   constant.LINKFLD: link to the course's site, used to get timetables"""
+    -   constant.LINKFLD: link to the course\'s site, used to get timetables"""
     course_list_url = school_url + constant.CRSSUFF
     resp = requests.get(course_list_url)
     soup = BeautifulSoup(resp.content, from_encoding=get_encoding(resp), features="html5lib")
@@ -166,22 +198,22 @@ def get_course_list(school_url):
 
 
 def get_course_url(course_list, course_index):
-    """Getter function to get a course's URL without directly accessing the dictionary"""
+    """Getter function to get a course\'s URL without directly accessing the dictionary"""
     return course_list[course_index][constant.LINKFLD]
 
 
 def get_course_name(course_list, course_index):
-    """Getter function to get a course's name without directly accessing the dictionary"""
+    """Getter function to get a course\'s name without directly accessing the dictionary"""
     return course_list[course_index][constant.NAMEFLD]
 
 
 def get_course_code(course_list, course_index):
-    """Getter function to get a course's internal code without directly accessing the dictionary"""
+    """Getter function to get a course\'s internal code without directly accessing the dictionary"""
     return course_list[course_index][constant.CODEFLD]
 
 
 def get_course_lang(course_url):
-    """Getter function to get a course's language without directly analyzing the URL"""
+    """Getter function to get a course\'s language without directly analyzing the URL"""
     return constant.CRSLANG_EN if "cycle" in course_url else constant.CRSLANG_IT
 
 
@@ -189,8 +221,8 @@ def get_curricula(course_url, year):
     """Encodes the available curricula for a given course in a given year in a vaguely sane format
 
     Dictionary fields:
-    -   constant.CODEFLD: curr code as used in JSON requests
-    -   constant.NAMEFLD: human-readable curr name"""
+    -   constant.CODEFLD: curriculum code as used in JSON requests
+    -   constant.NAMEFLD: human-readable curriculum name"""
     curricula = []
     curricula_req_url = constant.CURRICULAURLFORMAT[get_course_lang(course_url)].format(course_url, year)
     for curr in requests.get(curricula_req_url).json():
@@ -199,12 +231,12 @@ def get_curricula(course_url, year):
 
 
 def get_curr_name(curricula, curr_index):
-    """Getter function to get a curr's name without directly accessing the dictionary"""
+    """Getter function to get a curriculum\'s name without directly accessing the dictionary"""
     return curricula[curr_index][constant.NAMEFLD]
 
 
 def get_curr_code(curricula, curr_index):
-    """Getter function to get a curr's internal code without directly accessing the dictionary"""
+    """Getter function to get a curriculum\'s internal code without directly accessing the dictionary"""
     return curricula[curr_index][constant.CODEFLD]
 
 
@@ -277,7 +309,8 @@ def encode_no_json_timetable(raw_timetable):
                     startdatetime = period_date.replace(hour=starthr, minute=startmm)
                     enddatetime = period_date.replace(hour=endhr, minute=endmm)
                     lessons.append(
-                        {constant.NAMEFLD: title, constant.LSNSTARTFLD: startdatetime, constant.LSNENDFLD: enddatetime,
+                        {constant.NAMEFLD: title, constant.LSNSTARTFLD: startdatetime,
+                         constant.LSNENDFLD: enddatetime,
                          constant.LOCATIONFLD: location})
     return lessons
 
@@ -308,7 +341,7 @@ def get_classes_json(course_url, year, curr):
     """Gets a list of classes from a JSON timetable
 
     As of 2018-11-13, JSON timetables have a constant.CLASSES field which holds an array of classes;
-    its index 1 is the class's name"""
+    its index 1 is the class\'s name"""
     resp = requests.get(constant.TIMETABLEURLFORMAT[get_course_lang(course_url)].format(course_url, year, curr))
     classes = []
     for _class in resp.json()[constant.CLASSES]:
@@ -341,5 +374,5 @@ def get_ical_file(timetable, classes):
 def get_safe_course_name(name):
     """Generates a string that is safe to use as a file name
 
-    Strips special characters and removes digits to remove the internal code from the course's name"""
+    Strips special characters and removes digits to remove the internal code from the course\'s name"""
     return "".join([c for c in name if c.isalpha() and not c.isdigit()]).rstrip()
