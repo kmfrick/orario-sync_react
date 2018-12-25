@@ -3,10 +3,11 @@ __pycache__/
 
 
 now.json
-requirements.txt
+
 
 *.ics
 *.pyc
 *.html
+
 
 .nowignore

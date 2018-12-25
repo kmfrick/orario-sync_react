@@ -125,12 +125,12 @@ def get_lessons_no_json(i, soup):
     return class_lessons
 
 
-def get_timetable_no_json(course_url, year, curr):
+def get_raw_timetable_no_json(course_url, year, curr):
     """Encodes the timetable of a course that does not use a JSON timetable in a vaguely sane format
 
     Dictionary fields:
     -   constant.NAMEFLD: name of the class
-    -   constant.CLS(START|END)FLD: first|lass lessons of a certain class
+    -   constant.CLS(START|END)FLD: first|last lessons of a certain class
     -   constant.LOCATIONFLD: where the class is held (the same every day that class is held)
     -   constant.LESSONSFLD: array of dicts describing the days and times a certain class is held
     The 4th field\'s dict fields are as returned by get_lessons_no_json()
@@ -241,25 +241,27 @@ def get_curr_code(curricula, curr_index):
 
 
 def encode_json_timetable(raw_timetable):
-    """Encodes a JSON timetable in a vaguely sane format
+    """Encodes a JSON timetable in a vaguely sane format (array of dictionaries with 5 fields)
 
     Dictionary fields:
     -   constant.NAMEFLD: class name
     -   constant.LSNSTARTFLD: datetime object with lesson start time
     -   constant.LSNENDFLD: datetime object with lesson end time
     -   constant.LOCATIONFLD: where the lesson is held, if available
+    -   constant.TEACHERFLD: who holds the lesson, if available
     """
     lessons = []
-    for e in raw_timetable[constant.EVENTS]:
-        title = e[constant.TITLE]
-        if e[constant.ROOMS]:
-            location = e[constant.ROOMS][0][constant.CLASSROOM] + ", " + e[constant.ROOMS][0][constant.CAMPUS]
+    for lesson in raw_timetable[constant.EVENTS]:
+        title = lesson[constant.TITLE]
+        if lesson[constant.ROOMS]:
+            location = lesson[constant.ROOMS][0][constant.CLASSROOM] + ", " + lesson[constant.ROOMS][0][constant.CAMPUS]
         else:
             location = constant.NO_LOC_AVAILABLE
-        start = dateutil.parser.parse(e[constant.START])
-        end = dateutil.parser.parse(e[constant.END])
+        start = dateutil.parser.parse(lesson[constant.START])
+        end = dateutil.parser.parse(lesson[constant.END])
+        teacher = lesson["docente"]
         lessons.append({constant.NAMEFLD: title, constant.LSNSTARTFLD: start, constant.LSNENDFLD: end,
-                        constant.LOCATIONFLD: location})
+                        constant.LOCATIONFLD: location, constant.TEACHERFLD: teacher})
     return lessons
 
 
@@ -288,8 +290,9 @@ def encode_no_json_timetable(raw_timetable):
         -   constant.LSNSTARTFLD: datetime object with lesson start time
         -   constant.LSNENDFLD: datetime object with lesson end time
         -   constant.LOCATIONFLD: where the lesson is held, if available
+        -   constant.TEACHERFLD: who holds the lesson, if available
         """
-    days_of_week_it = ["lunedì", "martedì", "mercoledì", "giovedì", "venerdì", "sabato", "domenica"]
+
     lessons = []
     for _class in raw_timetable:
         title = _class[constant.NAMEFLD]
@@ -300,19 +303,25 @@ def encode_no_json_timetable(raw_timetable):
         for period_date in class_period:
             weekday = period_date.weekday()
             for lesson in _class[constant.LESSONSFLD]:
+                teacher = lesson[constant.TEACHERFLD]
                 starthr = int(lesson[constant.LSNSTARTFLD].split(":")[0])
                 startmm = int(lesson[constant.LSNSTARTFLD].split(":")[1])
                 endhr = int(lesson[constant.LSNENDFLD].split(":")[0])
                 endmm = int(lesson[constant.LSNENDFLD].split(":")[1])
-                lesson_weekday = days_of_week_it.index(lesson[constant.DOWFLD].lower())
+                lesson_weekday = get_it_dow_number(lesson)
                 if weekday == lesson_weekday:
                     startdatetime = period_date.replace(hour=starthr, minute=startmm)
                     enddatetime = period_date.replace(hour=endhr, minute=endmm)
                     lessons.append(
                         {constant.NAMEFLD: title, constant.LSNSTARTFLD: startdatetime,
                          constant.LSNENDFLD: enddatetime,
-                         constant.LOCATIONFLD: location})
+                         constant.LOCATIONFLD: location, constant.TEACHERFLD: teacher})
     return lessons
+
+
+def get_it_dow_number(lesson):
+    days_of_week_it = ["lunedì", "martedì", "mercoledì", "giovedì", "venerdì", "sabato", "domenica"]
+    return days_of_week_it.index(lesson[constant.DOWFLD].lower())
 
 
 def has_json_timetable(course_url):
@@ -333,7 +342,8 @@ def get_timetable(course_url, year, curr):
         req = requests.get(url=timetable_url)
         timetable = encode_json_timetable(req.json())
     else:
-        timetable = encode_no_json_timetable(get_timetable_no_json(course_url, year, curr))
+        raw_timetable = get_raw_timetable_no_json(course_url, year, curr)
+        timetable = encode_no_json_timetable(raw_timetable)
     return timetable
 
 
@@ -358,7 +368,7 @@ def get_classes(course_url, year, curr):
 
 
 def get_ical_file(timetable, classes):
-    """Creates an iCalendar file with the timetable as requested"""
+    """Creates an iCalendar file with the timetable as [requested"""
     cal = Calendar()
     for lesson in timetable:
         if lesson[constant.NAMEFLD] in classes:
@@ -367,6 +377,7 @@ def get_ical_file(timetable, classes):
             event.add(constant.ICALSTART, lesson[constant.LSNSTARTFLD])
             event.add(constant.ICALEND, lesson[constant.LSNENDFLD])
             event.add(constant.ICALLOCATION, lesson[constant.LOCATIONFLD])
+            event.add("description", lesson[constant.TEACHERFLD])
             cal.add_component(event)
     return cal.to_ical()
 
