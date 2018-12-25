@@ -4,7 +4,7 @@ import React from "react";
 import SelectList from "./SelectList";
 import BitSet from "bitset"
 
-const beReqUrl = "http://localhost:5000";
+const beReqUrl = "https://localhost:5000";
 const beParamSchool = "?school=";
 const beParamCourse = "&course=";
 const beParamYear = "&year=";
@@ -22,7 +22,7 @@ const yearLabels = ["Primo", "Secondo", "Terzo", "Quarto", "Quinto", "Sesto"];
 const mainTitle = <>OrarioSync</>;
 const schoolHeader = <>Seleziona la tua Scuola</>;
 const courseHeader = <>Seleziona il tuo corso di studi</>;
-const yearHeader = <>Seleziona l\'anno a cui sei iscritto</>;
+const yearHeader = <>Seleziona l'anno a cui sei iscritto</>;
 const curriculumHeader = <>Seleziona il tuo curriculum</>;
 const classesHeader = <>Seleziona i corsi che segui</>;
 const buttonContent = <>Scarica orario in iCal</>;
