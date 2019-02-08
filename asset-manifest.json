@@ -1,13 +1,13 @@
 {
-  "main.css": "/orario-sync_react/static/css/main.c92996f2.chunk.css",
-  "main.js": "/orario-sync_react/static/js/main.c4ec2918.chunk.js",
-  "main.js.map": "/orario-sync_react/static/js/main.c4ec2918.chunk.js.map",
-  "static/js/1.7285e4c6.chunk.js": "/orario-sync_react/static/js/1.7285e4c6.chunk.js",
-  "static/js/1.7285e4c6.chunk.js.map": "/orario-sync_react/static/js/1.7285e4c6.chunk.js.map",
+  "main.css": "/orario-sync_react/static/css/main.5b5087ed.chunk.css",
+  "main.js": "/orario-sync_react/static/js/main.33a8aad6.chunk.js",
+  "main.js.map": "/orario-sync_react/static/js/main.33a8aad6.chunk.js.map",
+  "static/js/1.fe3ce18b.chunk.js": "/orario-sync_react/static/js/1.fe3ce18b.chunk.js",
+  "static/js/1.fe3ce18b.chunk.js.map": "/orario-sync_react/static/js/1.fe3ce18b.chunk.js.map",
   "runtime~main.js": "/orario-sync_react/static/js/runtime~main.e23cf368.js",
   "runtime~main.js.map": "/orario-sync_react/static/js/runtime~main.e23cf368.js.map",
-  "static/css/main.c92996f2.chunk.css.map": "/orario-sync_react/static/css/main.c92996f2.chunk.css.map",
+  "static/css/main.5b5087ed.chunk.css.map": "/orario-sync_react/static/css/main.5b5087ed.chunk.css.map",
   "index.html": "/orario-sync_react/index.html",
-  "precache-manifest.82de650351a7a4899af3c7cf762a631c.js": "/orario-sync_react/precache-manifest.82de650351a7a4899af3c7cf762a631c.js",
+  "precache-manifest.ec61d34c0b4d44df65dcfc8e309d2655.js": "/orario-sync_react/precache-manifest.ec61d34c0b4d44df65dcfc8e309d2655.js",
   "service-worker.js": "/orario-sync_react/service-worker.js"
 }
