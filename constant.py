@@ -14,6 +14,7 @@ CHECKJSONURLFORMAT = {CRSLANG_IT: "{}/orario-lezioni",
                       CRSLANG_EN: "{}/timetable"}
 SCHLTYPE = "output-list-school"
 CRSSUFF = "/corsi/corsi-di-studio"
+UNIBO_CSS = "https://www.unibo.it/++theme++unibotheme.portale/styles/unibo.css"
 
 # json fields
 EVENTS = "events"
@@ -31,6 +32,7 @@ CURRCRS = "corso"
 CRSNAME = "name"
 CRSURL = "url"
 CLASSES = "insegnamenti"
+TEACHER = "docente"
 
 # html info
 COURSELINK = "Sito del Corso"
@@ -38,6 +40,7 @@ COURSENAMETAG = "data-title"
 CLSLABELPOS = 3
 CLSNOJSONFORMID = "insegnamenti-popup"
 TIMETABLETBLCLASS = "timetable"
+SCHLTAG = "dt"
 
 # error handling
 NOTFOUND = "NOTFOUND"
@@ -77,7 +80,25 @@ ICALLOCATION = "location"
 ICALEND = "dtend"
 ICALSTART = "dtstart"
 ICALTITLE = "summary"
+TIMEZONE = "Europe/Rome"
+TIMEZONESTR = """BEGIN:VTIMEZONE
+TZID:Europe/Rome
+X-LIC-LOCATION:Europe/Rome
+BEGIN:DAYLIGHT
+TZOFFSETFROM:+0100
+TZOFFSETTO:+0200
+TZNAME:CEST
+DTSTART:19700329T020000
+RRULE:FREQ=YEARLY;BYDAY=-1SU;BYMONTH=3
+END:DAYLIGHT
+BEGIN:STANDARD
+TZOFFSETFROM:+0200
+TZOFFSETTO:+0100
+TZNAME:CET
+DTSTART:19701025T030000
+RRULE:FREQ=YEARLY;BYDAY=-1SU;BYMONTH=10
+END:STANDARD
+END:VTIMEZONE"""
 
 # template for lesson dict
 DEFLSN = {DOWFLD: "", CLSSTARTFLD: "", CLSENDFLD: "", TEACHERFLD: ""}
-SCHLTAG = "dt"

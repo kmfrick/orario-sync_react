@@ -11,8 +11,6 @@ from icalendar import Calendar, Event, Timezone
 
 import constant
 
-TIMEZONE = "Europe/Rome"
-
 
 def get_args_from_url(requestline):
     """Parses arguments from a given URL"""
@@ -59,11 +57,9 @@ def get_school_links():
     resp = requests.get(constant.SCHOOLSURL)
     soup = BeautifulSoup(resp.content, from_encoding=get_encoding(resp), features="html5lib")
     parser = tinycss.make_parser('page3')
-    css = requests.get("https://www.unibo.it/++theme++unibotheme.portale/styles/unibo.css").content
+    css = requests.get(constant.UNIBO_CSS).content
     parsed = parser.parse_stylesheet_bytes(css)
     rules = parsed.rules
-    rules
-    print(parsed.rules)
     school_links = []
 
     for atag in soup.find_all(constant.SCHLTAG, class_=constant.SCHLTYPE):
@@ -262,7 +258,7 @@ def encode_json_timetable(raw_timetable):
             location = constant.NO_LOC_AVAILABLE
         start = dateutil.parser.parse(lesson[constant.START])
         end = dateutil.parser.parse(lesson[constant.END])
-        teacher = lesson["docente"]
+        teacher = lesson[constant.TEACHER]
         lessons.append({constant.NAMEFLD: title, constant.LSNSTARTFLD: start, constant.LSNENDFLD: end,
                         constant.LOCATIONFLD: location, constant.TEACHERFLD: teacher})
     return lessons
@@ -371,36 +367,19 @@ def get_classes(course_url, year, curr):
         return get_classes_no_json(course_url, year, curr)
 
 
-TIMEZONESTR = """BEGIN:VTIMEZONE
-TZID:Europe/Rome
-X-LIC-LOCATION:Europe/Rome
-BEGIN:DAYLIGHT
-TZOFFSETFROM:+0100
-TZOFFSETTO:+0200
-TZNAME:CEST
-DTSTART:19700329T020000
-RRULE:FREQ=YEARLY;BYDAY=-1SU;BYMONTH=3
-END:DAYLIGHT
-BEGIN:STANDARD
-TZOFFSETFROM:+0200
-TZOFFSETTO:+0100
-TZNAME:CET
-DTSTART:19701025T030000
-RRULE:FREQ=YEARLY;BYDAY=-1SU;BYMONTH=10
-END:STANDARD
-END:VTIMEZONE"""
+
 
 def get_ical_file(timetable, classes):
     """Creates an iCalendar file with the timetable as [requested"""
     cal = Calendar()
-    timezone = Timezone.from_ical(TIMEZONESTR)
+    timezone = Timezone.from_ical(constant.TIMEZONESTR)
     cal.add_component(timezone)
     for lesson in timetable:
         if lesson[constant.NAMEFLD] in classes:
             event = Event()
             event.add(constant.ICALTITLE, lesson[constant.NAMEFLD])
-            event.add(constant.ICALSTART, lesson[constant.LSNSTARTFLD], parameters={'tzid': TIMEZONE})
-            event.add(constant.ICALEND, lesson[constant.LSNENDFLD], parameters={'tzid': TIMEZONE})
+            event.add(constant.ICALSTART, lesson[constant.LSNSTARTFLD], parameters={'tzid': constant.TIMEZONE})
+            event.add(constant.ICALEND, lesson[constant.LSNENDFLD], parameters={'tzid': constant.TIMEZONE})
             event.add(constant.ICALLOCATION, lesson[constant.LOCATIONFLD])
             event.add("description", lesson[constant.TEACHERFLD])
             cal.add_component(event)
