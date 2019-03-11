@@ -1,5 +1,4 @@
 import json
-
 from http.server import BaseHTTPRequestHandler
 
 from getters import get_school_links

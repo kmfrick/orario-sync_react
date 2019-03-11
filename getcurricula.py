@@ -1,5 +1,4 @@
 import json
-
 from http.server import BaseHTTPRequestHandler
 
 from getters import *
@@ -14,11 +13,9 @@ class handler(BaseHTTPRequestHandler):
         self.end_headers()
         args = get_args_from_url(self.requestline)
         course_index = args[constant.ARG_COURSE]
-        school_index = args[constant.ARG_SCHOOL]
+        school_index = args[constant.ARG_SCHOOL] + 1
         year = args[constant.ARG_YEAR]
-        school_links = get_school_links()
-        school_url = get_school_url(school_links, school_index)
-        course_list = get_course_list(school_url)
+        course_list = get_course_list(school_index)
         course_url = get_course_url(course_list, course_index)
         curricula = get_curricula(course_url, year)
         message = json.dumps(curricula)

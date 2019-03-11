@@ -12,7 +12,7 @@ TIMETABLEURLFORMATNOJSON = {CRSLANG_IT: "{}/orario-lezioni?calendar_view=&date=&
                             CRSLANG_EN: "{}/timetable?calendar_view=&date=&anno={}&curricula={}"}
 CHECKJSONURLFORMAT = {CRSLANG_IT: "{}/orario-lezioni",
                       CRSLANG_EN: "{}/timetable"}
-SCHLTYPE = "internal-link"
+SCHLTYPE = "output-list-school"
 CRSSUFF = "/corsi/corsi-di-studio"
 
 # json fields
@@ -50,7 +50,7 @@ YEARPOS = 2
 CURRPOS = 3
 
 # list of schools
-SCHOOLSURL = "https://www.unibo.it/it/ateneo/sedi-e-strutture/scuole"
+SCHOOLSURL = "https://www.unibo.it/it/didattica/corsi-di-studio/?sort=area"
 
 # flask arguments
 ARG_CURR = "curr"
@@ -80,3 +80,4 @@ ICALTITLE = "summary"
 
 # template for lesson dict
 DEFLSN = {DOWFLD: "", CLSSTARTFLD: "", CLSENDFLD: "", TEACHERFLD: ""}
+SCHLTAG = "dt"

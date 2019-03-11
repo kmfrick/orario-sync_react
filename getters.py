@@ -4,11 +4,14 @@ from datetime import timedelta
 
 import dateutil.parser
 import requests
+import tinycss
 from bs4 import BeautifulSoup
 from bs4.dammit import EncodingDetector
-from icalendar import Calendar, Event
+from icalendar import Calendar, Event, Timezone
 
 import constant
+
+TIMEZONE = "Europe/Rome"
 
 
 def get_args_from_url(requestline):
@@ -49,6 +52,93 @@ def get_encoding(resp):
     html_encoding = EncodingDetector.find_declared_encoding(resp.content, is_html=True)
     encoding = html_encoding or http_encoding
     return encoding
+
+
+def get_school_links():
+    """Gets a list of unibo's schools parsing a webpage"""
+    resp = requests.get(constant.SCHOOLSURL)
+    soup = BeautifulSoup(resp.content, from_encoding=get_encoding(resp), features="html5lib")
+    parser = tinycss.make_parser('page3')
+    css = requests.get("https://www.unibo.it/++theme++unibotheme.portale/styles/unibo.css").content
+    parsed = parser.parse_stylesheet_bytes(css)
+    rules = parsed.rules
+    rules
+    print(parsed.rules)
+    school_links = []
+
+    for atag in soup.find_all(constant.SCHLTAG, class_=constant.SCHLTYPE):
+        school_links.append({constant.NAMEFLD: atag.contents[1].contents[0].strip()})
+    return school_links
+
+
+def get_course_list(school_id):
+    """Gets a list of courses for a given school
+
+    As of 2018-11-13, every school\'s course list is under the corsi/corsi-di-studio subfolder. <a> tags holding
+    course URLs have constant.COURSENAMETAG as text
+    Dictionary fields:
+    -   constant.CODEFLD: course code for internal use
+    -   constant.NAMEFLD: course name
+    -   constant.LINKFLD: link to the course\'s site, used to get timetables"""
+    course_list_url = constant.SCHOOLSURL
+    resp = requests.get(course_list_url)
+    soup = BeautifulSoup(resp.content, from_encoding=get_encoding(resp), features="html5lib")
+    courses = []
+    selected_school = ""
+    for schooltag in soup.find_all(constant.SCHLTAG, class_=constant.SCHLTYPE):
+        if schooltag.contents[1].contents[0].strip() == "itemid" + str(school_id):
+            selected_school = schooltag['data-target'][1:]
+
+    for ddtag in soup.find_all("dd", id="itemid" + str(school_id)):
+        if ddtag.contents:
+            for atag in ddtag.find_all("a", class_="umtrack"):
+                course_number = re.findall(r"\d+", atag[constant.COURSENAMETAG])[0]
+                courses.append({constant.CODEFLD: course_number, constant.NAMEFLD: atag[constant.COURSENAMETAG],
+                                constant.LINKFLD: atag["href"]})
+    return courses
+
+
+def get_course_url(course_list, course_index):
+    """Getter function to get a course\'s URL without directly accessing the dictionary"""
+    return course_list[course_index][constant.LINKFLD]
+
+
+def get_course_name(course_list, course_index):
+    """Getter function to get a course\'s name without directly accessing the dictionary"""
+    return course_list[course_index][constant.NAMEFLD]
+
+
+def get_course_code(course_list, course_index):
+    """Getter function to get a course\'s internal code without directly accessing the dictionary"""
+    return course_list[course_index][constant.CODEFLD]
+
+
+def get_course_lang(course_url):
+    """Getter function to get a course\'s language without directly analyzing the URL"""
+    return constant.CRSLANG_EN if "cycle" in course_url else constant.CRSLANG_IT
+
+
+def get_curricula(course_url, year):
+    """Encodes the available curricula for a given course in a given year in a vaguely sane format
+
+    Dictionary fields:
+    -   constant.CODEFLD: curriculum code as used in JSON requests
+    -   constant.NAMEFLD: human-readable curriculum name"""
+    curricula = []
+    curricula_req_url = constant.CURRICULAURLFORMAT[get_course_lang(course_url)].format(course_url, year)
+    for curr in requests.get(curricula_req_url).json():
+        curricula.append({constant.CODEFLD: curr[constant.CURRVAL], constant.NAMEFLD: curr[constant.CURRNAME]})
+    return curricula
+
+
+def get_curr_name(curricula, curr_index):
+    """Getter function to get a curriculum\'s name without directly accessing the dictionary"""
+    return curricula[curr_index][constant.NAMEFLD]
+
+
+def get_curr_code(curricula, curr_index):
+    """Getter function to get a curriculum\'s internal code without directly accessing the dictionary"""
+    return curricula[curr_index][constant.CODEFLD]
 
 
 def get_classes_no_json(course_url, year, curr):
@@ -151,93 +241,6 @@ def get_raw_timetable_no_json(course_url, year, curr):
                       constant.LESSONSFLD: period_lessons}
             classes.append(_class)
     return classes
-
-
-def get_school_links():
-    """Gets a list of unibo\'s schools parsing a webpage"""
-    resp = requests.get(constant.SCHOOLSURL)
-    soup = BeautifulSoup(resp.content, from_encoding=get_encoding(resp), features="html5lib")
-    school_links = []
-    for atag in soup.find_all("a", class_=constant.SCHLTYPE, href=True):
-        school_links.append({constant.NAMEFLD: atag.contents[0], constant.LINKFLD: atag["href"]})
-    return school_links
-
-
-def get_school_url(school_links, school_index):
-    """Ensures all school URLs are in the same format and end with  "/it"
-
-    If this is not checked for, every function that uses a school\'s URL will fail because most of the webpages
-    are under the /it (or /en) subfolder"""
-    school_url = school_links[school_index][constant.LINKFLD]
-    if school_url[-3:] != "/it":
-        school_url += "/it"
-    return school_url
-
-
-def get_course_list(school_url):
-    """Gets a list of courses for a given school
-
-    As of 2018-11-13, every school\'s course list is under the constant.CRSSUFF subfolder. <a> tags holding
-    course URLs have constant.COURSENAMETAG as text
-    Dictionary fields:
-    -   constant.CODEFLD: course code for internal use
-    -   constant.NAMEFLD: course name
-    -   constant.LINKFLD: link to the course\'s site, used to get timetables"""
-    course_list_url = school_url + constant.CRSSUFF
-    resp = requests.get(course_list_url)
-    soup = BeautifulSoup(resp.content, from_encoding=get_encoding(resp), features="html5lib")
-
-    courses = []
-    for atag in soup.find_all("a", href=True):
-        if atag.contents:
-            if atag.contents[0] == constant.COURSELINK:
-                course_number = re.findall(r"\d+", atag[constant.COURSENAMETAG])[0]
-                courses.append({constant.CODEFLD: course_number, constant.NAMEFLD: atag[constant.COURSENAMETAG],
-                                constant.LINKFLD: atag["href"]})
-    return courses
-
-
-def get_course_url(course_list, course_index):
-    """Getter function to get a course\'s URL without directly accessing the dictionary"""
-    return course_list[course_index][constant.LINKFLD]
-
-
-def get_course_name(course_list, course_index):
-    """Getter function to get a course\'s name without directly accessing the dictionary"""
-    return course_list[course_index][constant.NAMEFLD]
-
-
-def get_course_code(course_list, course_index):
-    """Getter function to get a course\'s internal code without directly accessing the dictionary"""
-    return course_list[course_index][constant.CODEFLD]
-
-
-def get_course_lang(course_url):
-    """Getter function to get a course\'s language without directly analyzing the URL"""
-    return constant.CRSLANG_EN if "cycle" in course_url else constant.CRSLANG_IT
-
-
-def get_curricula(course_url, year):
-    """Encodes the available curricula for a given course in a given year in a vaguely sane format
-
-    Dictionary fields:
-    -   constant.CODEFLD: curriculum code as used in JSON requests
-    -   constant.NAMEFLD: human-readable curriculum name"""
-    curricula = []
-    curricula_req_url = constant.CURRICULAURLFORMAT[get_course_lang(course_url)].format(course_url, year)
-    for curr in requests.get(curricula_req_url).json():
-        curricula.append({constant.CODEFLD: curr[constant.CURRVAL], constant.NAMEFLD: curr[constant.CURRNAME]})
-    return curricula
-
-
-def get_curr_name(curricula, curr_index):
-    """Getter function to get a curriculum\'s name without directly accessing the dictionary"""
-    return curricula[curr_index][constant.NAMEFLD]
-
-
-def get_curr_code(curricula, curr_index):
-    """Getter function to get a curriculum\'s internal code without directly accessing the dictionary"""
-    return curricula[curr_index][constant.CODEFLD]
 
 
 def encode_json_timetable(raw_timetable):
@@ -359,6 +362,7 @@ def get_classes_json(course_url, year, curr):
     return classes
 
 
+
 def get_classes(course_url, year, curr):
     """Checks if the selected course uses a JSON calendar and calls the appropriate get_classes() function"""
     if has_json_timetable(course_url):
@@ -367,15 +371,36 @@ def get_classes(course_url, year, curr):
         return get_classes_no_json(course_url, year, curr)
 
 
+TIMEZONESTR = """BEGIN:VTIMEZONE
+TZID:Europe/Rome
+X-LIC-LOCATION:Europe/Rome
+BEGIN:DAYLIGHT
+TZOFFSETFROM:+0100
+TZOFFSETTO:+0200
+TZNAME:CEST
+DTSTART:19700329T020000
+RRULE:FREQ=YEARLY;BYDAY=-1SU;BYMONTH=3
+END:DAYLIGHT
+BEGIN:STANDARD
+TZOFFSETFROM:+0200
+TZOFFSETTO:+0100
+TZNAME:CET
+DTSTART:19701025T030000
+RRULE:FREQ=YEARLY;BYDAY=-1SU;BYMONTH=10
+END:STANDARD
+END:VTIMEZONE"""
+
 def get_ical_file(timetable, classes):
     """Creates an iCalendar file with the timetable as [requested"""
     cal = Calendar()
+    timezone = Timezone.from_ical(TIMEZONESTR)
+    cal.add_component(timezone)
     for lesson in timetable:
         if lesson[constant.NAMEFLD] in classes:
             event = Event()
             event.add(constant.ICALTITLE, lesson[constant.NAMEFLD])
-            event.add(constant.ICALSTART, lesson[constant.LSNSTARTFLD])
-            event.add(constant.ICALEND, lesson[constant.LSNENDFLD])
+            event.add(constant.ICALSTART, lesson[constant.LSNSTARTFLD], parameters={'tzid': TIMEZONE})
+            event.add(constant.ICALEND, lesson[constant.LSNENDFLD], parameters={'tzid': TIMEZONE})
             event.add(constant.ICALLOCATION, lesson[constant.LOCATIONFLD])
             event.add("description", lesson[constant.TEACHERFLD])
             cal.add_component(event)
@@ -387,3 +412,4 @@ def get_safe_course_name(name):
 
     Strips special characters and removes digits to remove the internal code from the course\'s name"""
     return "".join([c for c in name if c.isalpha() and not c.isdigit()]).rstrip()
+
