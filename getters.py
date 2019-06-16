@@ -1,16 +1,34 @@
 import datetime
-import re
 from datetime import timedelta
 
 import dateutil.parser
 import requests
-import tinycss
 from bs4 import BeautifulSoup
 from bs4.dammit import EncodingDetector
 from icalendar import Calendar, Event, Timezone
 
 import constant
 
+
+def get_encoding(resp):
+    """Gets the encoding used in a webpage"""
+    http_encoding = resp.encoding if "charset" in resp.headers.get("content-type", "").lower() else None
+    html_encoding = EncodingDetector.find_declared_encoding(resp.content, is_html=True)
+    encoding = html_encoding or http_encoding
+    return encoding
+
+
+def get_department_names():
+    """Gets a list of unibo's departments parsing a webpage"""
+    dep_resp = requests.get(constant.DEPURL)
+    dep_soup = BeautifulSoup(dep_resp.content, from_encoding=get_encoding(dep_resp), features="html5lib")
+    depts = dep_soup.find("div", class_="dropdown-list")
+    dept_links = []
+    dept_names = depts.find_all("button")
+    for j in dept_names:
+        dept_links.append({constant.NAMEFLD: j.find("span", class_="title").contents[0]})
+
+    return dept_links
 
 def get_args_from_url(requestline):
     """Parses arguments from a given URL"""
@@ -44,53 +62,29 @@ def get_args_from_url(requestline):
             constant.ARG_YEAR: year}
 
 
-def get_encoding(resp):
-    """Gets the encoding used in a webpage"""
-    http_encoding = resp.encoding if "charset" in resp.headers.get("content-type", "").lower() else None
-    html_encoding = EncodingDetector.find_declared_encoding(resp.content, is_html=True)
-    encoding = html_encoding or http_encoding
-    return encoding
-
-
-def get_school_links():
-    """Gets a list of unibo's schools parsing a webpage"""
-    resp = requests.get(constant.SCHOOLSURL)
-    soup = BeautifulSoup(resp.content, from_encoding=get_encoding(resp), features="html5lib")
-    parser = tinycss.make_parser('page3')
-    css = requests.get(constant.UNIBO_CSS).content
-    parsed = parser.parse_stylesheet_bytes(css)
-    rules = parsed.rules
-    school_links = []
-
-    for atag in soup.find_all(constant.SCHLTAG, class_=constant.SCHLTYPE):
-        school_links.append({constant.NAMEFLD: atag.contents[1].contents[0].strip()})
-    return school_links
-
-
 def get_course_list(school_id):
-    """Gets a list of courses for a given school
+    """Gets a list of courses for a given department
 
-    As of 2018-11-13, every school\'s course list is under the corsi/corsi-di-studio subfolder. <a> tags holding
-    course URLs have constant.COURSENAMETAG as text
+    As of 2019-06-16, every department\'s courses can be obtained with a GET request to constant.CRSURL
+    with the appropriate department number (ordered from 1 as in DEPURL)
     Dictionary fields:
     -   constant.CODEFLD: course code for internal use
     -   constant.NAMEFLD: course name
     -   constant.LINKFLD: link to the course\'s site, used to get timetables"""
-    course_list_url = constant.SCHOOLSURL
-    resp = requests.get(course_list_url)
-    soup = BeautifulSoup(resp.content, from_encoding=get_encoding(resp), features="html5lib")
+    courses_resp = requests.get(constant.CRSURL + str(school_id))
+    courses_soup = BeautifulSoup(courses_resp.content, from_encoding=get_encoding(courses_resp), features="html5lib")
+    course_types = courses_soup.find_all("p", class_="type")
+    course_names = courses_soup.find_all("div", class_="title")
+    course_links = courses_soup.find_all("a", class_="umtrack")
     courses = []
-    selected_school = ""
-    for schooltag in soup.find_all(constant.SCHLTAG, class_=constant.SCHLTYPE):
-        if schooltag.contents[1].contents[0].strip() == "itemid" + str(school_id):
-            selected_school = schooltag['data-target'][1:]
-
-    for ddtag in soup.find_all("dd", id="itemid" + str(school_id)):
-        if ddtag.contents:
-            for atag in ddtag.find_all("a", class_="umtrack"):
-                course_number = re.findall(r"\d+", atag[constant.COURSENAMETAG])[0]
-                courses.append({constant.CODEFLD: course_number, constant.NAMEFLD: atag[constant.COURSENAMETAG],
-                                constant.LINKFLD: atag["href"]})
+    for i in zip(course_names, course_links, course_types):
+        course_type = "[" + "".join(c for c in i[2].contents[0] if c.isupper()) + "]"
+        course_name = i[0].contents[1].contents[0] + " " + course_type
+        # Only parse numbers in course id
+        course_code = "".join(c for c in i[0].contents[3].contents[0] if c.isdigit())
+        course_link = i[1]["href"]
+        courses.append({constant.CODEFLD: course_code, constant.NAMEFLD: course_name,
+                        constant.LINKFLD: course_link})
     return courses
 
 

@@ -30,7 +30,7 @@ COURSE = "corso"
 CURRNAME = "label"
 CURRCRS = "corso"
 CRSNAME = "name"
-CRSURL = "url"
+CRSURLLABEL = "url"
 CLASSES = "insegnamenti"
 TEACHER = "docente"
 
@@ -53,7 +53,8 @@ YEARPOS = 2
 CURRPOS = 3
 
 # list of schools
-SCHOOLSURL = "https://www.unibo.it/it/didattica/corsi-di-studio/?sort=area"
+CRSURL = "https://www.unibo.it/it/didattica/corsi-di-studio/elenco?&schede="
+DEPURL = "https://www.unibo.it/it/didattica/corsi-di-studio"
 
 # flask arguments
 ARG_CURR = "curr"
