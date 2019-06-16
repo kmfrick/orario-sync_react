@@ -4,7 +4,7 @@ import React from "react";
 import SelectList from "./SelectList";
 import BitSet from "bitset"
 
-const beReqUrl = "https://localhost:5000";
+const beReqUrl = "https://orario-syncunibo-1a25gxxmi.now.sh";
 const beParamSchool = "?school=";
 const beParamCourse = "&course=";
 const beParamYear = "&year=";
@@ -20,7 +20,7 @@ const durations = {"[LMCU]": 6, "[L]": 3, "[LM]": 2, "": 0};
 const yearLabels = ["Primo", "Secondo", "Terzo", "Quarto", "Quinto", "Sesto"];
 
 const mainTitle = <>OrarioSync</>;
-const schoolHeader = <>Seleziona la tua Scuola</>;
+const schoolHeader = <>Seleziona il tuo ambito di studi</>;
 const courseHeader = <>Seleziona il tuo corso di studi</>;
 const yearHeader = <>Seleziona l'anno a cui sei iscritto</>;
 const curriculumHeader = <>Seleziona il tuo curriculum</>;
