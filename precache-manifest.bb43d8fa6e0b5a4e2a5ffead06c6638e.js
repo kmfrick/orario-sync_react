@@ -1,11 +1,11 @@
 self.__precacheManifest = [
   {
-    "revision": "0c08108a1d5c04f02c3d",
-    "url": "/orario-sync_react/static/css/main.a25755a6.chunk.css"
+    "revision": "8f93d41ecc625808d635",
+    "url": "/orario-sync_react/static/css/main.bfc638f8.chunk.css"
   },
   {
-    "revision": "0c08108a1d5c04f02c3d",
-    "url": "/orario-sync_react/static/js/main.0c08108a.chunk.js"
+    "revision": "8f93d41ecc625808d635",
+    "url": "/orario-sync_react/static/js/main.8f93d41e.chunk.js"
   },
   {
     "revision": "fe3ce18b4fc121f9245f",
@@ -16,7 +16,7 @@ self.__precacheManifest = [
     "url": "/orario-sync_react/static/js/runtime~main.e23cf368.js"
   },
   {
-    "revision": "c45822dea3e24a91670cafced9c04265",
+    "revision": "f4ac85df8608a7281b2e8c4220bf1134",
     "url": "/orario-sync_react/index.html"
   }
 ];
