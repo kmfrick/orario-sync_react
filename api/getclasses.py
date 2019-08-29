@@ -1,7 +1,7 @@
 import json
 from http.server import BaseHTTPRequestHandler
 
-from getters import *
+from api.getters import *
 
 
 class handler(BaseHTTPRequestHandler):

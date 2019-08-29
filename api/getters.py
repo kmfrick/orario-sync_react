@@ -7,7 +7,7 @@ from bs4 import BeautifulSoup
 from bs4.dammit import EncodingDetector
 from icalendar import Calendar, Event, Timezone
 
-import constant
+from api import constant
 
 
 def get_encoding(resp):
@@ -368,9 +368,15 @@ def get_ical_file(timetable, classes):
     cal = Calendar()
     timezone = Timezone.from_ical(constant.TIMEZONESTR)
     cal.add_component(timezone)
+    cal.add("prodid", "//kmfrick//orario-sync//IT")
+    cal.add("version", "git")
+    i = 0
     for lesson in timetable:
         if lesson[constant.NAMEFLD] in classes:
             event = Event()
+            event.add("uid", str(datetime.datetime.now()) + "@OrarioSync" + str(i))
+            i = i + 1
+            event.add("dtstamp", datetime.datetime.now())
             event.add(constant.ICALTITLE, lesson[constant.NAMEFLD])
             event.add(constant.ICALSTART, lesson[constant.LSNSTARTFLD], parameters={'tzid': constant.TIMEZONE})
             event.add(constant.ICALEND, lesson[constant.LSNENDFLD], parameters={'tzid': constant.TIMEZONE})

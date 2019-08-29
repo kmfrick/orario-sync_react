@@ -1,7 +1,7 @@
 import json
 from http.server import BaseHTTPRequestHandler
 
-from getters import *
+from api.getters import *
 
 
 class handler(BaseHTTPRequestHandler):
@@ -12,12 +12,9 @@ class handler(BaseHTTPRequestHandler):
         self.send_header("Access-Control-Allow-Origin", "*")
         self.end_headers()
         args = get_args_from_url(self.requestline)
-        course_index = args[constant.ARG_COURSE]
-        school_index = args[constant.ARG_SCHOOL] + 1
-        year = args[constant.ARG_YEAR]
-        course_list = get_course_list(school_index)
-        course_url = get_course_url(course_list, course_index)
-        curricula = get_curricula(course_url, year)
-        message = json.dumps(curricula)
+        school_id = args[constant.ARG_SCHOOL] + 1
+        course_list = get_course_list(school_id)
+        print(course_list)
+        message = json.dumps(course_list)
         self.wfile.write(message.encode())
         return
