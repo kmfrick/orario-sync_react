@@ -4,7 +4,7 @@ import React from "react";
 import SelectList from "./SelectList";
 import BitSet from "bitset"
 
-const beReqUrl = "https://orario-syncunibo-1a25gxxmi.now.sh";
+const beReqUrl = "https://orario-syncunibo-lnrniqnns.now.sh/api";
 const beParamSchool = "?school=";
 const beParamCourse = "&course=";
 const beParamYear = "&year=";
@@ -58,8 +58,23 @@ class OrarioSyncApp extends React.Component {
     }
 
     componentDidUpdate(prevProps, prevState) {
-        const colors = ["#AA005F", "#EFAA00", "#FF7D18", "#0066A3", "#00857E", "#FFFFFF", "#00539F",
-            "#CE1126", "#8B2346", "#008633", "#3E2782"];
+        const colors = [
+            "#EFAA00",
+            "#FF7D18",
+            "#68A9E0",
+            "#000000",
+            "#AA005F",
+            "#CE1126",
+            "#8B2346",
+            "#AA005F",
+            "#008633",
+            "#008633",
+            "#FF7D18",
+            "#CE1126",
+            "#8B2346",
+            "#EFAA00",
+            "#AA005F",
+            "#FFFFFF"];
         const schoolIndex = this.state.schoolIndex;
         const courseIndex = this.state.courseIndex;
         const courseType = this.state.courseType;
@@ -139,20 +154,25 @@ class OrarioSyncApp extends React.Component {
             backgroundColor: this.state.listBgColor,
             color: this.state.listTextColor,
         };
+        const padded = {
+            fontSize: "18pt",
+            padding: "16px",
+            margin: "16px"
+        };
 
-        if (!schools.length) return <span>Getting schools...</span>;
+        if (!schools.length) return <span>Inizializzazione in breve tempo...</span>;
         let schoolNames = [];
         schools.forEach(item => schoolNames.push(item.name));
 
-        if (!courses.length && schoolIndex >= 0) return <span>Getting courses...</span>;
+        if (!courses.length && schoolIndex >= 0) return <span>Sto chiedendo alla scuola i corsi di studio...</span>;
         let courseNames = [];
         courses.forEach(item => courseNames.push(item.name));
 
-        if (!curricula.length && year >= 0) return <span>Getting curricula...</span>;
+        if (!curricula.length && year >= 0) return <span>Sto chiedendo al corso di studio i curricula...</span>;
         let curriculumNames = [];
         curricula.forEach(item => curriculumNames.push(item.name));
 
-        if (!classes.length && curriculumIndex >= 0) return <span>Getting classes...</span>;
+        if (!classes.length && curriculumIndex >= 0) return <span>Sto chiedendo al corso di studio i corsi...</span>;
         let classNames = [];
         classes.forEach(item => classNames.push(item.name));
 
@@ -222,12 +242,15 @@ class OrarioSyncApp extends React.Component {
                 </>
                 }
                 {classesBtm > 0 &&
-                <div>
+                <div><div style={padded}>Sincronizza il calendario al seguente indirizzo per avere l'orario sempre aggiornato!</div>
+                    <div style={padded}><input type="textarea" value={beReqUrl + beGetCalendar + beParamSchool + schoolIndex + beParamCourse + courseIndex + beParamYear + year + beParamCurr + curriculumIndex + beParamClsBtm + classesBtm.toString(10)}></input></div>
+                    <div style={padded}>oppure</div>
                     <button
                         type="button"
                         onClick={e => window.open(beReqUrl + beGetCalendar + beParamSchool + schoolIndex + beParamCourse + courseIndex + beParamYear + year + beParamCurr + curriculumIndex + beParamClsBtm + classesBtm.toString(10))}>
                         {buttonContent}
                     </button>
+
                 </div>}
             </>
         )

@@ -1,16 +1,27 @@
+* {
+    font-family:monospace;
+    font-size: 16px;
+}
 body {
     margin: 0;
-    padding: 0;
-    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Roboto", "Oxygen",
-    "Ubuntu", "Cantarell", "Fira Sans", "Droid Sans", "Helvetica Neue",
-    sans-serif;
+    padding: 3em;
+    border: 1.25em solid #fdf6e3;
     text-align: center;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
-    font-size: 16px;
+    color: #000000;
+    line-height: 1.5;
+    background-color:#fdf6e3;
+
+}
+
+input {
+    font-family: monospace;
+    min-width: 50%;
 }
 
 button {
+    font-family:monospace;
     background-color: #313131;
     margin: 4em;
     border: none;
@@ -21,17 +32,12 @@ button {
     align-self: center;
     text-decoration: none;
     display: inline-block;
-    font-size: 16px;
+    font-size: 18px;
 }
 
 code {
     font-family: source-code-pro, Menlo, Monaco, Consolas, "Courier New",
     monospace;
-}
-
-body {
-    font-family: sans-serif;
-    background-color: #eeeeee
 }
 
 select {
@@ -77,10 +83,6 @@ ul {
     margin: 0;
 }
 
-body {
-    padding: 3em;
-    border: 1.25em solid #eeeeee;
-}
 
 .demo > div {
     display: inline-block;
