@@ -4,7 +4,7 @@ import React from "react";
 import SelectList from "./SelectList";
 import BitSet from "bitset"
 
-const beReqUrl = "https://orario-syncunibo-lnrniqnns.now.sh/api";
+const beReqUrl = "https://orario-sync-unibo.now.sh/api";
 const beParamSchool = "?school=";
 const beParamCourse = "&course=";
 const beParamYear = "&year=";
