@@ -317,20 +317,21 @@ def get_it_dow_number(lesson):
     return days_of_week_it.index(lesson[constant.DOWFLD].lower())
 
 
-def has_json_timetable(course_url):
+def has_json_timetable(course_url, year, curr):
     """Checks if a course uses a JSON timetable
 
     As of 2018-11-13, if a course uses a JSON timetable it has a <div id="calendar"> in its timetable page"""
-    page_url = constant.CHECKJSONURLFORMAT[get_course_lang(course_url)].format(course_url)
-    resp = requests.get(page_url)
-    soup = BeautifulSoup(resp.content, from_encoding=get_encoding(resp), features="html5lib")
-    hjt = (soup.find("div", id="calendar") is not None)
-    return hjt
+
+    page_url = constant.TIMETABLEURLFORMAT[get_course_lang(course_url)].format(course_url, year, curr)
+    resp = requests.get(page_url).json()
+    print(resp[constant.CLASSES])
+    hjt = not resp[constant.CLASSES]
+    return not hjt
 
 
 def get_timetable(course_url, year, curr):
     """Checks if the selected course uses a JSON calendar and calls the appropriate get_timetable function"""
-    if has_json_timetable(course_url):
+    if has_json_timetable(course_url, year, curr):
         timetable_url = constant.TIMETABLEURLFORMAT[get_course_lang(course_url)].format(course_url, year, curr)
         req = requests.get(url=timetable_url)
         timetable = encode_json_timetable(req.json())
@@ -355,7 +356,7 @@ def get_classes_json(course_url, year, curr):
 
 def get_classes(course_url, year, curr):
     """Checks if the selected course uses a JSON calendar and calls the appropriate get_classes() function"""
-    if has_json_timetable(course_url):
+    if has_json_timetable(course_url, year, curr):
         return get_classes_json(course_url, year, curr)
     else:
         return get_classes_no_json(course_url, year, curr)
