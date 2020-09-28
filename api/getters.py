@@ -244,7 +244,7 @@ def encode_json_timetable(raw_timetable):
     -   constant.TEACHERFLD: who holds the lesson, if available
     """
     lessons = []
-    for lesson in raw_timetable[constant.EVENTS]:
+    for lesson in raw_timetable:
         title = lesson[constant.TITLE]
         if lesson[constant.ROOMS]:
             location = lesson[constant.ROOMS][0][constant.CLASSROOM] + ", " + lesson[constant.ROOMS][0][constant.CAMPUS]
@@ -323,10 +323,8 @@ def has_json_timetable(course_url, year, curr):
     As of 2018-11-13, if a course uses a JSON timetable it has a <div id="calendar"> in its timetable page"""
 
     page_url = constant.TIMETABLEURLFORMAT[get_course_lang(course_url)].format(course_url, year, curr)
-    resp = requests.get(page_url).json()
-    print(resp[constant.CLASSES])
-    hjt = not resp[constant.CLASSES]
-    return not hjt
+    resp = requests.get(page_url)
+    return resp.status_code == 200
 
 
 def get_timetable(course_url, year, curr):
@@ -344,13 +342,13 @@ def get_timetable(course_url, year, curr):
 def get_classes_json(course_url, year, curr):
     """Gets a list of classes from a JSON timetable
 
-    As of 2018-11-13, JSON timetables have a constant.CLASSES field which holds an array of classes;
-    its index 1 is the class\'s name"""
+    As of 2020-09-28, JSON timetables do not have a list of classes anymore, so we have to traverse the
+	array of classes, get their names and remove duplicates"""
     resp = requests.get(constant.TIMETABLEURLFORMAT[get_course_lang(course_url)].format(course_url, year, curr))
     classes = []
-    for _class in resp.json()[constant.CLASSES]:
-        classes.append(_class[1])
-    return classes
+    for _class in resp.json():
+        classes.append(_class[constant.TITLE])
+    return list(set(classes))
 
 
 
