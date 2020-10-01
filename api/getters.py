@@ -265,7 +265,7 @@ def date_range(start_date, end_date):
 
 
 def parse_italian_date(date_str):
-    """Parses an Italian date in the form \"dd monthlongname yyyy\""""
+    """Parses an Italian date in the form "dd monthlongname yyyy"""
     italian_months = ["gennaio", "febbraio", "marzo", "aprile", "maggio", "giugno", "luglio", "agosto", "settembre",
                       "ottobre", "novembre", "dicembre"]
     fields = date_str.split(" ")
@@ -355,9 +355,9 @@ def get_classes_json(course_url, year, curr):
 def get_classes(course_url, year, curr):
     """Checks if the selected course uses a JSON calendar and calls the appropriate get_classes() function"""
     if has_json_timetable(course_url, year, curr):
-        return get_classes_json(course_url, year, curr)
+        return sorted(get_classes_json(course_url, year, curr))
     else:
-        return get_classes_no_json(course_url, year, curr)
+        return sorted(get_classes_no_json(course_url, year, curr))
 
 
 

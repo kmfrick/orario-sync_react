@@ -27,10 +27,11 @@ class handler(BaseHTTPRequestHandler):
         curr = get_curr_code(curricula, curr_index)
         timetable = get_timetable(course_url, year, curr)
         classes = get_classes(course_url, year, curr)
+		print(classes)
         selected_classes = []
-        for (i, _class) in enumerate(classes, 0):
+        for (i, cur_class) in enumerate(classes, 0):
             if (1 << i) & selected_classes_btm:
-                selected_classes.append(_class)
+                selected_classes.append(cur_class)
         calendar = get_ical_file(timetable, selected_classes)
 
         self.wfile.write(calendar)
