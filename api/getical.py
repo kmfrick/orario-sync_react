@@ -27,7 +27,6 @@ class handler(BaseHTTPRequestHandler):
         curr = get_curr_code(curricula, curr_index)
         timetable = get_timetable(course_url, year, curr)
         classes = get_classes(course_url, year, curr)
-		print(classes)
         selected_classes = []
         for (i, cur_class) in enumerate(classes, 0):
             if (1 << i) & selected_classes_btm:
