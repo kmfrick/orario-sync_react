@@ -368,7 +368,7 @@ def get_ical_file(timetable, classes):
     timezone = Timezone.from_ical(constant.TIMEZONESTR)
     cal.add_component(timezone)
     cal.add("prodid", "//kmfrick//orario-sync//IT")
-    cal.add("version", "git")
+    cal.add("version", "1.0")
     i = 0
     for lesson in timetable:
         if lesson[constant.NAMEFLD] in classes:
