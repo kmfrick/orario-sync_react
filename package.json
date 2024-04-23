@@ -5,7 +5,7 @@
   "homepage": "https://kmfrick.github.io/orario-sync_react",
   "dependencies": {
     "bitset": "5.0.3",
-    "gh-pages": "^2.0.1",
+    "gh-pages": "^5.0.0",
     "react": "^16.6.1",
     "react-dom": "^16.6.1",
     "react-list-select": "^0.4.0",
