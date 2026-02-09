@@ -55,6 +55,8 @@ CURRPOS = 3
 # list of schools
 CRSURL = "https://www.unibo.it/it/didattica/corsi-di-studio/elenco?&schede="
 DEPURL = "https://www.unibo.it/it/didattica/corsi-di-studio"
+CATALOGURL = "https://www.unibo.it/it/studiare/lauree-e-lauree-magistrali-a-ciclo-unico"
+CATALOGELENCOURLFORMAT = CATALOGURL + "/elenco?schede={}"
 
 # flask arguments
 ARG_CURR = "curr"

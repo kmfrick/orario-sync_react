@@ -10,6 +10,9 @@ from icalendar import Calendar, Event, Timezone
 from api import constant
 
 
+REQUEST_TIMEOUT = 30
+
+
 def get_encoding(resp):
     """Gets the encoding used in a webpage"""
     http_encoding = resp.encoding if "charset" in resp.headers.get("content-type", "").lower() else None
@@ -20,13 +23,31 @@ def get_encoding(resp):
 
 def get_department_names():
     """Gets a list of unibo's departments parsing a webpage"""
-    dep_resp = requests.get(constant.DEPURL)
+    dep_resp = requests.get(constant.CATALOGURL, timeout=REQUEST_TIMEOUT)
     dep_soup = BeautifulSoup(dep_resp.content, from_encoding=get_encoding(dep_resp), features="html5lib")
-    depts = dep_soup.find("div", class_="dropdown-list")
     dept_links = []
-    dept_names = depts.find_all("button")
-    for j in dept_names:
-        dept_links.append({constant.NAMEFLD: j.find("span", class_="title").contents[0]})
+    # Current catalog structure: each school/area is exposed as a dropdown button
+    # with a `data-params` attribute containing `schede=<id>`.
+    for button in dep_soup.select("div.dropdown-list h2 button[data-params*='schede=']"):
+        title = button.find("span", class_="title")
+        name = title.get_text(strip=True) if title is not None else button.get_text(strip=True)
+        if name:
+            dept_links.append({constant.NAMEFLD: name})
+
+    if dept_links:
+        return dept_links
+
+    # Legacy fallback in case UniBo restores old pages/selectors.
+    legacy_resp = requests.get(constant.DEPURL, timeout=REQUEST_TIMEOUT)
+    legacy_soup = BeautifulSoup(legacy_resp.content, from_encoding=get_encoding(legacy_resp), features="html5lib")
+    depts = legacy_soup.find("div", class_="dropdown-list")
+    if depts is None:
+        return dept_links
+    for button in depts.find_all("button"):
+        title = button.find("span", class_="title")
+        name = title.get_text(strip=True) if title is not None else button.get_text(strip=True)
+        if name:
+            dept_links.append({constant.NAMEFLD: name})
 
     return dept_links
 
@@ -71,16 +92,57 @@ def get_course_list(school_id):
     -   constant.CODEFLD: course code for internal use
     -   constant.NAMEFLD: course name
     -   constant.LINKFLD: link to the course\'s site, used to get timetables"""
-    courses_resp = requests.get(constant.CRSURL + str(school_id))
+    courses = []
+
+    # Current catalog endpoint for grouped course cards.
+    new_resp = requests.get(constant.CATALOGELENCOURLFORMAT.format(school_id), timeout=REQUEST_TIMEOUT)
+    new_soup = BeautifulSoup(new_resp.content, from_encoding=get_encoding(new_resp), features="html5lib")
+    for item in new_soup.select("div.card-list-rounded div.item"):
+        title = item.select_one("div.title h3")
+        if title is None:
+            continue
+        course_name = title.get_text(strip=True)
+        if not course_name:
+            continue
+
+        course_code = ""
+        add_button = item.find("button", class_="add-favourites")
+        if add_button is not None:
+            course_code = add_button.get("data-codice", "").strip()
+        if not course_code:
+            code_tag = item.select_one("div.title p.tag")
+            if code_tag is not None:
+                course_code = "".join(c for c in code_tag.get_text() if c.isdigit())
+
+        course_link = ""
+        img = item.select_one("div.img-wrap img")
+        if img is not None:
+            src = img.get("src", "")
+            if src:
+                # Card images are served from the canonical course site:
+                # https://corsi.unibo.it/.../@@leadimage/image/unibo
+                course_link = src.split("/@@", 1)[0]
+        if not course_link:
+            detail_link = item.select_one("p.goto a.umtrack[href]")
+            if detail_link is not None:
+                course_link = detail_link.get("href", "")
+
+        if course_code and course_link:
+            courses.append({constant.CODEFLD: course_code, constant.NAMEFLD: course_name,
+                            constant.LINKFLD: course_link})
+
+    if courses:
+        return courses
+
+    # Legacy fallback in case old endpoint/selectors are still available.
+    courses_resp = requests.get(constant.CRSURL + str(school_id), timeout=REQUEST_TIMEOUT)
     courses_soup = BeautifulSoup(courses_resp.content, from_encoding=get_encoding(courses_resp), features="html5lib")
     course_types = courses_soup.find_all("p", class_="type")
     course_names = courses_soup.find_all("div", class_="title")
     course_links = courses_soup.find_all("a", class_="umtrack")
-    courses = []
     for i in zip(course_names, course_links, course_types):
         course_type = "[" + "".join(c for c in i[2].contents[0] if c.isupper()) + "]"
         course_name = i[0].contents[1].contents[0] + " " + course_type
-        # Only parse numbers in course id
         course_code = "".join(c for c in i[0].contents[3].contents[0] if c.isdigit())
         course_link = i[1]["href"]
         courses.append({constant.CODEFLD: course_code, constant.NAMEFLD: course_name,
@@ -390,4 +452,3 @@ def get_safe_course_name(name):
 
     Strips special characters and removes digits to remove the internal code from the course\'s name"""
     return "".join([c for c in name if c.isalpha() and not c.isdigit()]).rstrip()
-
