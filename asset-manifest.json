@@ -1,13 +1,13 @@
 {
   "files": {
     "main.css": "/orario-sync_react/static/css/main.ca63d18d.css",
-    "main.js": "/orario-sync_react/static/js/main.37d7e390.js",
+    "main.js": "/orario-sync_react/static/js/main.02344750.js",
     "index.html": "/orario-sync_react/index.html",
     "main.ca63d18d.css.map": "/orario-sync_react/static/css/main.ca63d18d.css.map",
-    "main.37d7e390.js.map": "/orario-sync_react/static/js/main.37d7e390.js.map"
+    "main.02344750.js.map": "/orario-sync_react/static/js/main.02344750.js.map"
   },
   "entrypoints": [
     "static/css/main.ca63d18d.css",
-    "static/js/main.37d7e390.js"
+    "static/js/main.02344750.js"
   ]
 }
