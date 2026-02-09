@@ -4,7 +4,8 @@ import React from "react";
 import SelectList from "./SelectList";
 import BitSet from "bitset"
 
-const beReqUrl = "https://orario-sync-unibo.vercel.app/api";
+const defaultBackendUrl = process.env.NODE_ENV === "development" ? "http://127.0.0.1:8000/api" : "";
+const beReqUrl = (process.env.REACT_APP_BACKEND_URL || defaultBackendUrl).replace(/\/+$/, "");
 const beParamSchool = "?school=";
 const beParamCourse = "&course=";
 const beParamYear = "&year=";

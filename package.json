@@ -2,6 +2,7 @@
   "name": "orario-sync_react",
   "version": "0.1.0",
   "private": true,
+  "license": "AGPL-3.0",
   "homepage": "https://kmfrick.github.io/orario-sync_react",
   "dependencies": {
     "bitset": "5.0.3",
@@ -13,6 +14,9 @@
   },
   "scripts": {
     "start": "react-scripts start",
+    "local:deploy": "bash scripts/local_deploy.sh",
+    "backend:deploy:gcp": "bash infra/deploy_backend.sh",
+    "frontend:deploy:ghpages:tf-backend": "bash scripts/deploy_ghpages_with_tf_backend.sh",
     "build": "react-scripts build",
     "test": "react-scripts test",
     "predeploy": "npm run build",

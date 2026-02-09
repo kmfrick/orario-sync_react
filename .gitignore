@@ -2,6 +2,14 @@
 
 # dependencies
 /node_modules
+
+# Local infra bootstrap artifacts
+.gcp_env
+.infra-ansible-venv/
+
+# Python caches
+__pycache__/
+*.pyc
 /.pnp
 .pnp.js
 

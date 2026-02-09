@@ -13,6 +13,21 @@ from api import constant
 REQUEST_TIMEOUT = 30
 
 
+def get_course_type_tag_from_duration(course_item):
+    """Infers legacy course type tags from the course card duration text."""
+    for period in course_item.select("div.more-text p"):
+        text = " ".join(period.get_text(" ", strip=True).split()).lower()
+        if not text.startswith("durata"):
+            continue
+        if "6 anni" in text or "5 anni" in text:
+            return "[LMCU]"
+        if "3 anni" in text:
+            return "[L]"
+        if "2 anni" in text:
+            return "[LM]"
+    return ""
+
+
 def get_encoding(resp):
     """Gets the encoding used in a webpage"""
     http_encoding = resp.encoding if "charset" in resp.headers.get("content-type", "").lower() else None
@@ -104,6 +119,9 @@ def get_course_list(school_id):
         course_name = title.get_text(strip=True)
         if not course_name:
             continue
+        course_type = get_course_type_tag_from_duration(item)
+        if course_type:
+            course_name = "{} {}".format(course_name, course_type)
 
         course_code = ""
         add_button = item.find("button", class_="add-favourites")

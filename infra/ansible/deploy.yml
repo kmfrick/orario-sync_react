@@ -1,0 +1,169 @@
+---
+- name: Configure orario-sync backend
+  hosts: backend
+  become: true
+  force_handlers: true
+  gather_facts: false
+  vars:
+    app_dir: /opt/orario-sync-backend
+    app_user: orario
+    app_group: orario
+    backend_port: "{{ backend_port | default(8080) }}"
+    backend_hostname: "{{ backend_hostname | mandatory }}"
+    backend_tls_email: "{{ backend_tls_email | mandatory }}"
+    repo_root: "{{ repo_root | default(playbook_dir + '/../../') }}"
+
+  tasks:
+    - name: Install system packages
+      ansible.builtin.apt:
+        update_cache: true
+        name:
+          - python3
+          - python3-venv
+          - python3-pip
+          - ca-certificates
+          - caddy
+        state: present
+
+    - name: Ensure backend group exists
+      ansible.builtin.group:
+        name: "{{ app_group }}"
+        system: true
+
+    - name: Ensure backend user exists
+      ansible.builtin.user:
+        name: "{{ app_user }}"
+        group: "{{ app_group }}"
+        system: true
+        shell: /usr/sbin/nologin
+        home: "{{ app_dir }}"
+        create_home: false
+
+    - name: Ensure application directory exists
+      ansible.builtin.file:
+        path: "{{ app_dir }}"
+        state: directory
+        owner: "{{ app_user }}"
+        group: "{{ app_group }}"
+        mode: "0755"
+
+    - name: Copy backend API sources
+      ansible.builtin.copy:
+        src: "{{ repo_root }}/orario-sync_unibo/api/"
+        dest: "{{ app_dir }}/api/"
+        owner: "{{ app_user }}"
+        group: "{{ app_group }}"
+        directory_mode: "0755"
+        mode: "0644"
+      notify: Restart backend
+
+    - name: Copy backend requirements
+      ansible.builtin.copy:
+        src: "{{ repo_root }}/orario-sync_unibo/requirements.txt"
+        dest: "{{ app_dir }}/requirements.txt"
+        owner: "{{ app_user }}"
+        group: "{{ app_group }}"
+        mode: "0644"
+      notify: Restart backend
+
+    - name: Copy backend server entrypoint
+      ansible.builtin.copy:
+        src: "{{ repo_root }}/scripts/local_api_server.py"
+        dest: "{{ app_dir }}/local_api_server.py"
+        owner: "{{ app_user }}"
+        group: "{{ app_group }}"
+        mode: "0755"
+      notify: Restart backend
+
+    - name: Create backend virtual environment
+      ansible.builtin.command:
+        cmd: "python3 -m venv {{ app_dir }}/.venv"
+        creates: "{{ app_dir }}/.venv/bin/python"
+
+    - name: Install Python dependencies
+      ansible.builtin.pip:
+        requirements: "{{ app_dir }}/requirements.txt"
+        virtualenv: "{{ app_dir }}/.venv"
+        virtualenv_python: python3
+        state: present
+      notify: Restart backend
+
+    - name: Ensure backend directory ownership after dependency install
+      ansible.builtin.file:
+        path: "{{ app_dir }}"
+        state: directory
+        recurse: true
+        owner: "{{ app_user }}"
+        group: "{{ app_group }}"
+
+    - name: Install systemd service
+      ansible.builtin.template:
+        src: orario-sync-backend.service.j2
+        dest: /etc/systemd/system/orario-sync-backend.service
+        owner: root
+        group: root
+        mode: "0644"
+      notify:
+        - Reload systemd
+        - Restart backend
+
+    - name: Install Caddy reverse-proxy config
+      ansible.builtin.template:
+        src: Caddyfile.j2
+        dest: /etc/caddy/Caddyfile
+        owner: root
+        group: root
+        mode: "0644"
+      register: caddy_config
+
+    - name: Ensure caddy service is enabled and running
+      ansible.builtin.systemd:
+        name: caddy
+        enabled: true
+        state: started
+
+    - name: Restart caddy when configuration changes
+      ansible.builtin.systemd:
+        name: caddy
+        state: restarted
+      when: caddy_config.changed
+
+    - name: Ensure backend service is enabled and running
+      ansible.builtin.systemd:
+        name: orario-sync-backend
+        enabled: true
+        state: started
+
+    - name: Apply pending handlers before health checks
+      ansible.builtin.meta: flush_handlers
+
+    - name: Verify backend health endpoint
+      ansible.builtin.uri:
+        url: "http://127.0.0.1:{{ backend_port }}/api/getschools.py"
+        method: GET
+        status_code: 200
+      register: backend_health
+      retries: 10
+      delay: 3
+      until: backend_health.status == 200
+
+    - name: Verify caddy HTTPS endpoint
+      ansible.builtin.uri:
+        url: "https://{{ backend_hostname }}/api/getschools.py"
+        method: GET
+        status_code: 200
+        validate_certs: true
+      register: caddy_https_health
+      retries: 30
+      delay: 5
+      until: caddy_https_health.status == 200
+
+  handlers:
+    - name: Reload systemd
+      ansible.builtin.systemd:
+        daemon_reload: true
+
+    - name: Restart backend
+      ansible.builtin.systemd:
+        name: orario-sync-backend
+        state: restarted

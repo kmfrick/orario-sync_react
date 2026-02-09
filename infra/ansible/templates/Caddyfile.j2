@@ -1,0 +1,17 @@
+https://{{ backend_hostname }} {
+    tls {{ backend_tls_email }}
+    encode gzip
+
+    @api path /api /api/*
+    handle @api {
+        reverse_proxy 127.0.0.1:{{ backend_port }}
+    }
+
+    handle {
+        respond "" 404
+    }
+}
+
+http://{{ backend_hostname }} {
+    redir https://{{ backend_hostname }}{uri} permanent
+}

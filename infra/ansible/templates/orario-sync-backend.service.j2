@@ -1,0 +1,21 @@
+[Unit]
+Description=Orario Sync Backend API
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User={{ app_user }}
+Group={{ app_group }}
+WorkingDirectory={{ app_dir }}
+Environment=PYTHONPATH={{ app_dir }}
+ExecStart={{ app_dir }}/.venv/bin/python {{ app_dir }}/local_api_server.py --host 127.0.0.1 --port {{ backend_port }}
+Restart=always
+RestartSec=5
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=full
+ProtectHome=true
+
+[Install]
+WantedBy=multi-user.target

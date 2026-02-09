@@ -1,0 +1,13 @@
+project_id          = "your-gcp-project-id"
+# credentials_file  = "~/.config/gcloud/terraform-sa.json"
+region              = "us-east1"
+zone                = "us-east1-b"
+instance_name       = "orario-sync-backend"
+machine_type        = "e2-micro"
+ssh_user            = "debian"
+ssh_public_key_path = "~/.ssh/id_ed25519.pub"
+backend_port        = 8080
+
+# Strongly recommended for security:
+# ssh_source_ranges = ["YOUR.PUBLIC.IP/32"]
+# backend_web_source_ranges = ["0.0.0.0/0"]
