@@ -1,0 +1,65 @@
+name: CI and Deploy Frontend
+
+on:
+  push:
+    branches:
+      - master
+  workflow_dispatch:
+
+concurrency:
+  group: deploy-pages-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: write
+
+jobs:
+  test-build-and-deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: yarn
+
+      - name: Install frontend dependencies
+        run: yarn install --immutable
+
+      - name: Run frontend tests
+        run: CI=true yarn test --watchAll=false --passWithNoTests
+
+      - name: Build frontend (CI sanity)
+        run: yarn build
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install backend dependencies
+        run: python -m pip install -r orario-sync_unibo/requirements.txt
+
+      - name: Compile backend API
+        run: PYTHONPATH=orario-sync_unibo python -m compileall -q orario-sync_unibo/api
+
+      - name: Build frontend for GitHub Pages
+        env:
+          GH_PAGES: "true"
+          NEXT_PUBLIC_BACKEND_URL: ${{ vars.BACKEND_API_URL || 'https://35-229-122-88.sslip.io/api' }}
+        run: |
+          yarn build
+          touch out/.nojekyll
+
+      - name: Deploy to gh-pages
+        if: github.ref == 'refs/heads/master'
+        uses: peaceiris/actions-gh-pages@v4
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./out
+          publish_branch: gh-pages
+          enable_jekyll: false
