@@ -110,9 +110,10 @@ def get_course_list(school_id):
     courses = []
 
     # Current catalog endpoint for grouped course cards.
+    # UniBo has used both `card-list-rounded` and `card-list-abstract`.
     new_resp = requests.get(constant.CATALOGELENCOURLFORMAT.format(school_id), timeout=REQUEST_TIMEOUT)
     new_soup = BeautifulSoup(new_resp.content, from_encoding=get_encoding(new_resp), features="html5lib")
-    for item in new_soup.select("div.card-list-rounded div.item"):
+    for item in new_soup.select("div.card-list-rounded div.item, div.card-list-abstract div.item"):
         title = item.select_one("div.title h3")
         if title is None:
             continue

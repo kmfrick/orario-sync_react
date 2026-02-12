@@ -40,7 +40,7 @@ TLS notes:
 From repo root:
 
 ```bash
-npm run backend:deploy:gcp
+yarn backend:deploy:gcp
 ```
 
 This command:
@@ -54,7 +54,7 @@ This command:
 Set custom private key if needed:
 
 ```bash
-SSH_PRIVATE_KEY_PATH=~/.ssh/your_key npm run backend:deploy:gcp
+SSH_PRIVATE_KEY_PATH=~/.ssh/your_key yarn backend:deploy:gcp
 ```
 
 ### Deploy Frontend to GitHub Pages using Terraform backend URL
@@ -62,7 +62,7 @@ SSH_PRIVATE_KEY_PATH=~/.ssh/your_key npm run backend:deploy:gcp
 After backend deploy:
 
 ```bash
-npm run frontend:deploy:ghpages:tf-backend
+yarn frontend:deploy:ghpages:tf-backend
 ```
 
 This reads `api_base_url` from Terraform outputs (for example `https://34-138-1-31.sslip.io/api`) and builds/deploys React with:

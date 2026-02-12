@@ -43,4 +43,4 @@ echo "Starting React frontend on port ${FRONTEND_PORT} (backend: http://${API_HO
 REACT_APP_BACKEND_URL="http://${API_HOST}:${API_PORT}/api" \
 PORT="${FRONTEND_PORT}" \
 BROWSER=none \
-  npm start
+  yarn start

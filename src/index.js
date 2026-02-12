@@ -1,12 +1,11 @@
 import React from 'react';
-import ReactDOM from 'react-dom';
+import { createRoot } from 'react-dom/client';
 import './index.css';
 import * as serviceWorker from "./serviceWorker";
 import OrarioSyncApp from "./OrarioSyncApp"
 
-let osa = <OrarioSyncApp/>;
-
-ReactDOM.render(osa, document.getElementById("container"));
+const root = createRoot(document.getElementById("container"));
+root.render(<OrarioSyncApp />);
 
 
 // If you want your app to work offline and load faster, you can change

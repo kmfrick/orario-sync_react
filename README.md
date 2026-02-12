@@ -18,7 +18,7 @@ Le segnalazioni di errori sono benvenute!
 Run frontend + lambda-compatible backend locally:
 
 ```bash
-npm run local:deploy
+yarn local:deploy
 ```
 
 This command:
@@ -41,5 +41,5 @@ Infrastructure and provisioning live in `infra/`.
 - Frontend deploy bound to Terraform backend URL:
 
 ```bash
-npm run frontend:deploy:ghpages:tf-backend
+yarn frontend:deploy:ghpages:tf-backend
 ```

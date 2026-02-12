@@ -2,6 +2,8 @@
 
 # dependencies
 /node_modules
+/.yarn-cache
+/.pip-cache
 
 # Local infra bootstrap artifacts
 .gcp_env

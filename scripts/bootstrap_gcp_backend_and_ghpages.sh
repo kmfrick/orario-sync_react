@@ -309,7 +309,7 @@ if [[ -x "infra/deploy_backend.sh" ]]; then
   log "Deploying backend VM + configuring service via Terraform + Ansible"
   GOOGLE_IMPERSONATE_SERVICE_ACCOUNT="$TF_SA_EMAIL" \
     SSH_PRIVATE_KEY_PATH="${SSH_KEY_PRIV}" \
-    npm run backend:deploy:gcp -- -auto-approve
+    yarn backend:deploy:gcp -- -auto-approve
 
   API_URL="$(GOOGLE_IMPERSONATE_SERVICE_ACCOUNT="$TF_SA_EMAIL" terraform -chdir=infra/terraform output -raw api_base_url 2>/dev/null || true)"
   if [[ -n "$API_URL" ]]; then
@@ -320,7 +320,7 @@ fi
 if [[ -x "scripts/deploy_ghpages_with_tf_backend.sh" ]]; then
   log "Deploying frontend to GitHub Pages with Terraform backend URL"
   GOOGLE_IMPERSONATE_SERVICE_ACCOUNT="$TF_SA_EMAIL" \
-    npm run frontend:deploy:ghpages:tf-backend
+    yarn frontend:deploy:ghpages:tf-backend
 fi
 
 log "Done."
