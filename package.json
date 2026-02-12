@@ -20,7 +20,7 @@
     "build": "next build",
     "test": "echo \"No tests configured\"",
     "predeploy": "yarn build",
-    "deploy": "gh-pages -d out -n"
+    "deploy": "gh-pages -d out --nojekyll"
   },
   "browserslist": [
     ">0.2%",
