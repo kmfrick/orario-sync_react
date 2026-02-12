@@ -65,9 +65,9 @@ After backend deploy:
 yarn frontend:deploy:ghpages:tf-backend
 ```
 
-This reads `api_base_url` from Terraform outputs (for example `https://34-138-1-31.sslip.io/api`) and builds/deploys React with:
+This reads `api_base_url` from Terraform outputs (for example `https://34-138-1-31.sslip.io/api`) and builds/deploys the frontend with:
 
-- `REACT_APP_BACKEND_URL=<terraform api_base_url>`
+- `NEXT_PUBLIC_BACKEND_URL=<terraform api_base_url>`
 
 ### Destroy
 

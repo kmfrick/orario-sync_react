@@ -24,7 +24,7 @@ yarn local:deploy
 This command:
 - creates `.venv` if missing
 - starts a local API at `http://127.0.0.1:8000/api`
-- starts React dev server at `http://127.0.0.1:3000`
+- starts Next.js dev server at `http://127.0.0.1:3000`
 - points frontend to local backend automatically
 
 Optional env vars:

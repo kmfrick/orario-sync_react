@@ -40,7 +40,7 @@ for _ in $(seq 1 30); do
 done
 
 echo "Starting React frontend on port ${FRONTEND_PORT} (backend: http://${API_HOST}:${API_PORT}/api)..."
-REACT_APP_BACKEND_URL="http://${API_HOST}:${API_PORT}/api" \
+NEXT_PUBLIC_BACKEND_URL="http://${API_HOST}:${API_PORT}/api" \
 PORT="${FRONTEND_PORT}" \
 BROWSER=none \
   yarn start

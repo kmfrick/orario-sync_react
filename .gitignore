@@ -3,6 +3,7 @@
 # dependencies
 /node_modules
 /.yarn-cache
+/.yarn/install-state.gz
 /.pip-cache
 
 # Local infra bootstrap artifacts
@@ -20,6 +21,8 @@ __pycache__/
 
 # production
 /build
+/.next
+/out
 /.idea
 
 # misc
