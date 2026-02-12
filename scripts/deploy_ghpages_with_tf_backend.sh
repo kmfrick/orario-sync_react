@@ -26,5 +26,6 @@ fi
 echo "Deploying frontend to GitHub Pages with backend: ${BACKEND_API_URL}"
 (
   cd "${ROOT_DIR}"
-  GH_PAGES=true NEXT_PUBLIC_BACKEND_URL="${BACKEND_API_URL}" yarn deploy
+  GH_PAGES=true NEXT_PUBLIC_BACKEND_URL="${BACKEND_API_URL}" yarn build
+  yarn deploy
 )
