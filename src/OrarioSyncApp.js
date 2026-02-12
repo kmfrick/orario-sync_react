@@ -3,6 +3,7 @@
 import React from "react";
 import SelectList from "./SelectList";
 import BitSet from "bitset"
+import { getYearLabelsForCourseType, resolveCourseType } from "./courseUtils";
 
 const defaultBackendUrl = process.env.NODE_ENV === "development" ? "http://127.0.0.1:8000/api" : "";
 const beReqUrl = (process.env.NEXT_PUBLIC_BACKEND_URL || defaultBackendUrl).replace(/\/+$/, "");
@@ -17,9 +18,6 @@ const beGetCurricula = "/getcurricula.py";
 const beGetClasses = "/getclasses.py";
 const beGetCalendar = "/getical.py";
 
-const durations = {"[LMCU]": 6, "[L]": 3, "[LM]": 2, "": 0};
-const yearLabels = ["Primo", "Secondo", "Terzo", "Quarto", "Quinto", "Sesto"];
-
 const mainTitle = <>OrarioSync</>;
 const schoolHeader = <>Seleziona il tuo ambito di studi</>;
 const courseHeader = <>Seleziona il tuo corso di studi</>;
@@ -28,8 +26,6 @@ const curriculumHeader = <>Seleziona il tuo curriculum</>;
 const classesHeader = <>Seleziona i corsi che segui</>;
 const buttonContent = <>Scarica orario in iCal</>;
 
-
-const courseTypeRE = new RegExp("\\[(.*?)]");
 
 class OrarioSyncApp extends React.Component {
     state = {
@@ -97,10 +93,7 @@ class OrarioSyncApp extends React.Component {
 
         }
         if (prevState.courseType !== courseType) {
-            let items = [];
-            let yearNumbers = [...Array(durations[this.state.courseType]).keys()];
-            yearNumbers.forEach(i => items.push(yearLabels[i]));
-            this.setState({years: items});
+            this.setState({years: getYearLabelsForCourseType(courseType)});
         }
         if ((prevState.courseIndex !== courseIndex && year > 0) || prevState.year !== year) {
             fetch(beReqUrl + beGetCurricula + beParamSchool + schoolIndex + beParamCourse + courseIndex + beParamYear + year)
@@ -174,8 +167,6 @@ class OrarioSyncApp extends React.Component {
         curricula.forEach(item => curriculumNames.push(item.name));
 
         if (!classes.length && curriculumIndex >= 0) return <span>Sto chiedendo al corso di studio i corsi...</span>;
-        let classNames = [];
-        classes.forEach(item => classNames.push(item.name));
 
 
         return (
@@ -197,8 +188,11 @@ class OrarioSyncApp extends React.Component {
                     <SelectList
                         items={courseNames}
                         onSelect={selected => {
-                            this.setState({courseIndex: selected});
-                            this.setState({courseType: courseTypeRE.exec(courseNames[selected])[0]});
+                            const selectedCourse = courses[selected] || null;
+                            this.setState({
+                                courseIndex: selected,
+                                courseType: resolveCourseType(selectedCourse)
+                            });
                         }}
                         selected={courseIndex}
                         multiple={false}
