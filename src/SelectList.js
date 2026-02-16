@@ -1,35 +1,14 @@
-import List from "react-list-select";
 import React from "react";
+import List from "react-list-select";
 
-class SelectList extends List {
+function SelectList({ items, multiple, onSelect, selected, ariaLabel }) {
+  const normalizedSelected = multiple ? selected : [selected];
 
-    constructor(props) {
-        super(props);
-        this.updateSelected = this.updateSelected.bind(this);
-    }
-
-    updateSelected(newIndex) {
-        this.props.onSelect(newIndex);
-    }
-
-    render() {
-        if (this.props.multiple) {
-            return <List
-                multiple={true}
-                items={this.props.items}
-                onChange={this.updateSelected}
-                selected={this.props.selected}
-            />
-        } else {
-            return <List
-                multiple={false}
-                items={this.props.items}
-                onChange={this.updateSelected}
-                selected={[this.props.selected]}
-            />;
-        }
-
-    }
+  return (
+    <div className={`list-shell ${multiple ? "is-multi" : "is-single"}`} aria-label={ariaLabel}>
+      <List multiple={multiple} items={items} onChange={onSelect} selected={normalizedSelected} />
+    </div>
+  );
 }
 
 export default SelectList;
