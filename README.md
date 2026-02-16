@@ -32,6 +32,9 @@ Optional env vars:
 - `API_PORT` (default: `8000`)
 - `FRONTEND_PORT` (default: `3000`)
 - `INSTALL_DEPS` (default: `1`, set to `0` to skip `pip install`)
+- `BACKEND_ALLOWED_ORIGINS` (comma-separated CORS allowlist)
+- `BACKEND_RATE_LIMIT_MAX_REQUESTS` (default: `120` requests/window)
+- `BACKEND_RATE_LIMIT_WINDOW_SECONDS` (default: `60`)
 
 ## GCP Deployment (Backend on e2-micro + Frontend on GitHub Pages)
 

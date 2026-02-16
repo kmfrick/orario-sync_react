@@ -292,6 +292,29 @@ footer {
   justify-content: center;
 }
 
+.download-link-btn {
+  display: inline-block;
+  border: none;
+  border-radius: var(--radius-sm);
+  background: var(--primary);
+  color: #fff;
+  padding: 0.8rem 1.3rem;
+  cursor: pointer;
+  text-decoration: none;
+  transition: transform var(--ease), background-color var(--ease), box-shadow var(--ease);
+}
+
+.download-link-btn:hover {
+  background: var(--primary-2);
+  box-shadow: var(--shadow-btn);
+  transform: translateY(-1px);
+}
+
+.download-link-btn:focus-visible {
+  outline: 3px solid rgba(191, 75, 44, 0.35);
+  outline-offset: 2px;
+}
+
 .top-progress {
   position: fixed;
   top: 0;

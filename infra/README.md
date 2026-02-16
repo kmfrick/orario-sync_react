@@ -31,6 +31,11 @@ Optional (recommended):
 - `ssh_source_ranges = ["YOUR.IP/32"]`
 - `backend_web_source_ranges = ["0.0.0.0/0"]` (required for public HTTPS access)
 
+Security note:
+
+- `ssh_source_ranges` is required and no longer defaults to `0.0.0.0/0`.
+- Terraform will reject `0.0.0.0/0` for SSH.
+
 TLS notes:
 
 - `BACKEND_TLS_EMAIL` must be set (or discoverable from active `gcloud` account) so Caddy can request certs from ZeroSSL when Let's Encrypt rate-limits `sslip.io`.

@@ -271,7 +271,7 @@ MY_IP="$(curl -fsS https://api.ipify.org || true)"
 if [[ -n "$MY_IP" ]]; then
   SSH_CIDR="${MY_IP}/32"
 else
-  SSH_CIDR="0.0.0.0/0"
+  fail "Unable to detect your public IP for ssh_source_ranges. Set ssh_source_ranges manually in infra/terraform/terraform.tfvars."
 fi
 
 if [[ -d "infra/terraform" ]]; then

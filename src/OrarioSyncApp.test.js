@@ -165,4 +165,41 @@ describe("OrarioSyncApp", () => {
     await screen.findByText("Recovered Course [L]");
     expect(courseCalls).toBe(2);
   });
+
+  test("uses safe rel attributes on iCal download link", async () => {
+    global.fetch = jest.fn(async (url) => {
+      if (url.includes("/getschools.py")) {
+        return jsonResponse([{ name: "School Secure" }]);
+      }
+      if (url.includes("/getcourses.py?school=0")) {
+        return jsonResponse([
+          {
+            code: "4321",
+            name: "Secure Course [L]",
+            link: "https://corsi.unibo.it/laurea/Secure"
+          }
+        ]);
+      }
+      if (url.includes("/getcurricula.py?school=0&course=0&year=1")) {
+        return jsonResponse([{ value: "A", name: "Curriculum A" }]);
+      }
+      if (url.includes("/getclasses.py?school=0&course=0&year=1&curr=0")) {
+        return jsonResponse(["Class A"]);
+      }
+      throw new Error(`Unexpected URL ${url}`);
+    });
+
+    render(<OrarioSyncApp />);
+
+    fireEvent.click(await screen.findByText("School Secure"));
+    fireEvent.click(await screen.findByText("Secure Course [L]"));
+    fireEvent.click(await screen.findByText("Primo"));
+    fireEvent.click(await screen.findByText("Curriculum A"));
+    fireEvent.click(await screen.findByText("Class A"));
+
+    const downloadLink = await screen.findByRole("link", { name: "Scarica orario in iCal" });
+    expect(downloadLink).toHaveAttribute("target", "_blank");
+    expect(downloadLink).toHaveAttribute("rel", "noopener noreferrer");
+    expect(downloadLink.getAttribute("href")).toContain("/getical.py");
+  });
 });

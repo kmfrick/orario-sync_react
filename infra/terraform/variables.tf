@@ -81,7 +81,17 @@ variable "ssh_public_key_path" {
 variable "ssh_source_ranges" {
   description = "CIDRs allowed to SSH to VM"
   type        = list(string)
-  default     = ["0.0.0.0/0"]
+  nullable    = false
+
+  validation {
+    condition     = length(var.ssh_source_ranges) > 0
+    error_message = "ssh_source_ranges must contain at least one CIDR."
+  }
+
+  validation {
+    condition     = !contains(var.ssh_source_ranges, "0.0.0.0/0")
+    error_message = "ssh_source_ranges cannot include 0.0.0.0/0."
+  }
 }
 
 variable "backend_port" {

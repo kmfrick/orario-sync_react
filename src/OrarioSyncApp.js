@@ -741,9 +741,9 @@ function OrarioSyncApp() {
               </button>
             </div>
             <div className="download-card__cta">
-              <button type="button" onClick={() => window.open(icalUrl)}>
+              <a href={icalUrl} target="_blank" rel="noopener noreferrer" className="download-link-btn">
                 {buttonContent}
-              </button>
+              </a>
             </div>
           </section>
         ) : null}

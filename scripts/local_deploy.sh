@@ -6,6 +6,7 @@ API_HOST="${API_HOST:-127.0.0.1}"
 API_PORT="${API_PORT:-8000}"
 FRONTEND_PORT="${FRONTEND_PORT:-3000}"
 INSTALL_DEPS="${INSTALL_DEPS:-1}"
+DEFAULT_ALLOWED_ORIGINS="https://kmfrick.github.io,http://127.0.0.1:${FRONTEND_PORT},http://localhost:${FRONTEND_PORT}"
 
 cleanup() {
   if [[ -n "${API_PID:-}" ]] && kill -0 "${API_PID}" >/dev/null 2>&1; then
@@ -28,6 +29,7 @@ if [[ "${INSTALL_DEPS}" == "1" ]]; then
 fi
 
 echo "Starting local API on ${API_HOST}:${API_PORT}..."
+export BACKEND_ALLOWED_ORIGINS="${BACKEND_ALLOWED_ORIGINS:-${DEFAULT_ALLOWED_ORIGINS}}"
 PYTHONPATH="${ROOT_DIR}/orario-sync_unibo" \
   .venv/bin/python scripts/local_api_server.py --host "${API_HOST}" --port "${API_PORT}" &
 API_PID=$!

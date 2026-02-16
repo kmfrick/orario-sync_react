@@ -7,7 +7,6 @@ machine_type        = "e2-micro"
 ssh_user            = "debian"
 ssh_public_key_path = "~/.ssh/id_ed25519.pub"
 backend_port        = 8080
+ssh_source_ranges   = ["YOUR.PUBLIC.IP/32"]
 
-# Strongly recommended for security:
-# ssh_source_ranges = ["YOUR.PUBLIC.IP/32"]
 # backend_web_source_ranges = ["0.0.0.0/0"]

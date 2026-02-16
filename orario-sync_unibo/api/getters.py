@@ -1,5 +1,6 @@
 import datetime
 from datetime import timedelta
+from urllib.parse import urlparse
 
 import dateutil.parser
 import requests
@@ -11,6 +12,54 @@ from api import constant
 
 
 REQUEST_TIMEOUT = 30
+TRUSTED_COURSE_HOSTS = {"corsi.unibo.it", "www.corsi.unibo.it"}
+
+
+class UpstreamDataError(RuntimeError):
+    """Raised when upstream UniBo data cannot be fetched or trusted."""
+
+
+def _fetch(url):
+    """Performs an HTTP GET to UniBo endpoints with strict timeout/error handling."""
+    try:
+        response = requests.get(url, timeout=REQUEST_TIMEOUT)
+        response.raise_for_status()
+        return response
+    except requests.RequestException as exc:
+        raise UpstreamDataError("Upstream UniBo request failed") from exc
+
+
+def _fetch_json(url):
+    """Fetches and decodes JSON from UniBo endpoints with explicit error mapping."""
+    response = _fetch(url)
+    try:
+        return response.json()
+    except ValueError as exc:
+        raise UpstreamDataError("Invalid JSON from upstream UniBo endpoint") from exc
+
+
+def normalize_course_url(course_url):
+    """Returns a canonical, trusted course URL or raises UpstreamDataError."""
+    if not isinstance(course_url, str):
+        raise UpstreamDataError("Invalid course URL type")
+
+    parsed = urlparse(course_url.strip())
+    host = (parsed.hostname or "").lower()
+    if host not in TRUSTED_COURSE_HOSTS:
+        raise UpstreamDataError("Untrusted course URL host")
+    if parsed.scheme not in ("https", "http"):
+        raise UpstreamDataError("Unsupported course URL scheme")
+    if parsed.username or parsed.password:
+        raise UpstreamDataError("Credentials are not allowed in course URL")
+    if parsed.port not in (None, 80, 443):
+        raise UpstreamDataError("Unexpected course URL port")
+
+    path = parsed.path.rstrip("/")
+    if not path:
+        raise UpstreamDataError("Invalid course URL path")
+
+    # Always use HTTPS for outbound requests.
+    return "https://{}{}".format(host, path)
 
 
 def get_course_type_tag_from_duration(course_item):
@@ -38,22 +87,25 @@ def get_encoding(resp):
 
 def get_department_names():
     """Gets a list of unibo's departments parsing a webpage"""
-    dep_resp = requests.get(constant.CATALOGURL, timeout=REQUEST_TIMEOUT)
-    dep_soup = BeautifulSoup(dep_resp.content, from_encoding=get_encoding(dep_resp), features="html5lib")
     dept_links = []
-    # Current catalog structure: each school/area is exposed as a dropdown button
-    # with a `data-params` attribute containing `schede=<id>`.
-    for button in dep_soup.select("div.dropdown-list h2 button[data-params*='schede=']"):
-        title = button.find("span", class_="title")
-        name = title.get_text(strip=True) if title is not None else button.get_text(strip=True)
-        if name:
-            dept_links.append({constant.NAMEFLD: name})
+    try:
+        dep_resp = _fetch(constant.CATALOGURL)
+        dep_soup = BeautifulSoup(dep_resp.content, from_encoding=get_encoding(dep_resp), features="html5lib")
+        # Current catalog structure: each school/area is exposed as a dropdown button
+        # with a `data-params` attribute containing `schede=<id>`.
+        for button in dep_soup.select("div.dropdown-list h2 button[data-params*='schede=']"):
+            title = button.find("span", class_="title")
+            name = title.get_text(strip=True) if title is not None else button.get_text(strip=True)
+            if name:
+                dept_links.append({constant.NAMEFLD: name})
+    except UpstreamDataError:
+        pass
 
     if dept_links:
         return dept_links
 
     # Legacy fallback in case UniBo restores old pages/selectors.
-    legacy_resp = requests.get(constant.DEPURL, timeout=REQUEST_TIMEOUT)
+    legacy_resp = _fetch(constant.DEPURL)
     legacy_soup = BeautifulSoup(legacy_resp.content, from_encoding=get_encoding(legacy_resp), features="html5lib")
     depts = legacy_soup.find("div", class_="dropdown-list")
     if depts is None:
@@ -111,50 +163,59 @@ def get_course_list(school_id):
 
     # Current catalog endpoint for grouped course cards.
     # UniBo has used both `card-list-rounded` and `card-list-abstract`.
-    new_resp = requests.get(constant.CATALOGELENCOURLFORMAT.format(school_id), timeout=REQUEST_TIMEOUT)
-    new_soup = BeautifulSoup(new_resp.content, from_encoding=get_encoding(new_resp), features="html5lib")
-    for item in new_soup.select("div.card-list-rounded div.item, div.card-list-abstract div.item"):
-        title = item.select_one("div.title h3")
-        if title is None:
-            continue
-        course_name = title.get_text(strip=True)
-        if not course_name:
-            continue
-        course_type = get_course_type_tag_from_duration(item)
-        if course_type:
-            course_name = "{} {}".format(course_name, course_type)
+    try:
+        new_resp = _fetch(constant.CATALOGELENCOURLFORMAT.format(school_id))
+        new_soup = BeautifulSoup(new_resp.content, from_encoding=get_encoding(new_resp), features="html5lib")
+        for item in new_soup.select("div.card-list-rounded div.item, div.card-list-abstract div.item"):
+            title = item.select_one("div.title h3")
+            if title is None:
+                continue
+            course_name = title.get_text(strip=True)
+            if not course_name:
+                continue
+            course_type = get_course_type_tag_from_duration(item)
+            if course_type:
+                course_name = "{} {}".format(course_name, course_type)
 
-        course_code = ""
-        add_button = item.find("button", class_="add-favourites")
-        if add_button is not None:
-            course_code = add_button.get("data-codice", "").strip()
-        if not course_code:
-            code_tag = item.select_one("div.title p.tag")
-            if code_tag is not None:
-                course_code = "".join(c for c in code_tag.get_text() if c.isdigit())
+            course_code = ""
+            add_button = item.find("button", class_="add-favourites")
+            if add_button is not None:
+                course_code = add_button.get("data-codice", "").strip()
+            if not course_code:
+                code_tag = item.select_one("div.title p.tag")
+                if code_tag is not None:
+                    course_code = "".join(c for c in code_tag.get_text() if c.isdigit())
 
-        course_link = ""
-        img = item.select_one("div.img-wrap img")
-        if img is not None:
-            src = img.get("src", "")
-            if src:
-                # Card images are served from the canonical course site:
-                # https://corsi.unibo.it/.../@@leadimage/image/unibo
-                course_link = src.split("/@@", 1)[0]
-        if not course_link:
-            detail_link = item.select_one("p.goto a.umtrack[href]")
-            if detail_link is not None:
-                course_link = detail_link.get("href", "")
+            course_link = ""
+            img = item.select_one("div.img-wrap img")
+            if img is not None:
+                src = img.get("src", "")
+                if src:
+                    # Card images are served from the canonical course site:
+                    # https://corsi.unibo.it/.../@@leadimage/image/unibo
+                    try:
+                        course_link = normalize_course_url(src.split("/@@", 1)[0])
+                    except UpstreamDataError:
+                        course_link = ""
+            if not course_link:
+                detail_link = item.select_one("p.goto a.umtrack[href]")
+                if detail_link is not None:
+                    try:
+                        course_link = normalize_course_url(detail_link.get("href", ""))
+                    except UpstreamDataError:
+                        course_link = ""
 
-        if course_code and course_link:
-            courses.append({constant.CODEFLD: course_code, constant.NAMEFLD: course_name,
-                            constant.LINKFLD: course_link})
+            if course_code and course_link:
+                courses.append({constant.CODEFLD: course_code, constant.NAMEFLD: course_name,
+                                constant.LINKFLD: course_link})
+    except UpstreamDataError:
+        pass
 
     if courses:
         return courses
 
     # Legacy fallback in case old endpoint/selectors are still available.
-    courses_resp = requests.get(constant.CRSURL + str(school_id), timeout=REQUEST_TIMEOUT)
+    courses_resp = _fetch(constant.CRSURL + str(school_id))
     courses_soup = BeautifulSoup(courses_resp.content, from_encoding=get_encoding(courses_resp), features="html5lib")
     course_types = courses_soup.find_all("p", class_="type")
     course_names = courses_soup.find_all("div", class_="title")
@@ -163,7 +224,10 @@ def get_course_list(school_id):
         course_type = "[" + "".join(c for c in i[2].contents[0] if c.isupper()) + "]"
         course_name = i[0].contents[1].contents[0] + " " + course_type
         course_code = "".join(c for c in i[0].contents[3].contents[0] if c.isdigit())
-        course_link = i[1]["href"]
+        try:
+            course_link = normalize_course_url(i[1]["href"])
+        except UpstreamDataError:
+            continue
         courses.append({constant.CODEFLD: course_code, constant.NAMEFLD: course_name,
                         constant.LINKFLD: course_link})
     return courses
@@ -186,7 +250,8 @@ def get_course_code(course_list, course_index):
 
 def get_course_lang(course_url):
     """Getter function to get a course\'s language without directly analyzing the URL"""
-    return constant.CRSLANG_EN if "cycle" in course_url else constant.CRSLANG_IT
+    normalized = normalize_course_url(course_url)
+    return constant.CRSLANG_EN if "cycle" in normalized else constant.CRSLANG_IT
 
 
 def get_curricula(course_url, year):
@@ -196,8 +261,11 @@ def get_curricula(course_url, year):
     -   constant.CODEFLD: curriculum code as used in JSON requests
     -   constant.NAMEFLD: human-readable curriculum name"""
     curricula = []
-    curricula_req_url = constant.CURRICULAURLFORMAT[get_course_lang(course_url)].format(course_url, year)
-    for curr in requests.get(curricula_req_url).json():
+    normalized_course_url = normalize_course_url(course_url)
+    curricula_req_url = constant.CURRICULAURLFORMAT[get_course_lang(normalized_course_url)].format(
+        normalized_course_url, year
+    )
+    for curr in _fetch_json(curricula_req_url):
         curricula.append({constant.CODEFLD: curr[constant.CURRVAL], constant.NAMEFLD: curr[constant.CURRNAME]})
     return curricula
 
@@ -216,8 +284,11 @@ def get_classes_no_json(course_url, year, curr):
     """Gets a list of classes for courses that do not use a JSON timetable
 
     As of 2018-11-13 their names are the content of <li> tags in a <form> tag with id=constant.CLSNOJSONFORMID"""
-    classes_url = constant.TIMETABLEURLFORMATNOJSON[get_course_lang(course_url)].format(course_url, year, curr)
-    resp = requests.get(classes_url)
+    normalized_course_url = normalize_course_url(course_url)
+    classes_url = constant.TIMETABLEURLFORMATNOJSON[get_course_lang(normalized_course_url)].format(
+        normalized_course_url, year, curr
+    )
+    resp = _fetch(classes_url)
     soup = BeautifulSoup(resp.content, from_encoding=get_encoding(resp), features="html5lib")
     classes = []
     for li in soup.find("form", id=constant.CLSNOJSONFORMID).find_all("li"):
@@ -296,11 +367,14 @@ def get_raw_timetable_no_json(course_url, year, curr):
     -   constant.LESSONSFLD: array of dicts describing the days and times a certain class is held
     The 4th field\'s dict fields are as returned by get_lessons_no_json()
     """
-    timetable_url = constant.TIMETABLEURLFORMATNOJSON[get_course_lang(course_url)].format(course_url, year, curr)
-    resp = requests.get(timetable_url)
+    normalized_course_url = normalize_course_url(course_url)
+    timetable_url = constant.TIMETABLEURLFORMATNOJSON[get_course_lang(normalized_course_url)].format(
+        normalized_course_url, year, curr
+    )
+    resp = _fetch(timetable_url)
     soup = BeautifulSoup(resp.content, from_encoding=get_encoding(resp), features="html5lib")
     classes = []
-    available_classes = get_classes_no_json(course_url, year, curr)
+    available_classes = get_classes_no_json(normalized_course_url, year, curr)
     for i in range(0, len(available_classes)):
         class_name = get_class_name_no_json(i, soup)
         class_periods = get_class_periods_no_json(i, soup)
@@ -403,19 +477,31 @@ def has_json_timetable(course_url, year, curr):
 
     As of 2018-11-13, if a course uses a JSON timetable it has a <div id="calendar"> in its timetable page"""
 
-    page_url = constant.TIMETABLEURLFORMAT[get_course_lang(course_url)].format(course_url, year, curr)
-    resp = requests.get(page_url)
-    return resp.status_code == 200
+    normalized_course_url = normalize_course_url(course_url)
+    page_url = constant.TIMETABLEURLFORMAT[get_course_lang(normalized_course_url)].format(
+        normalized_course_url, year, curr
+    )
+    try:
+        resp = requests.get(page_url, timeout=REQUEST_TIMEOUT)
+    except requests.RequestException as exc:
+        raise UpstreamDataError("Upstream UniBo request failed") from exc
+    if resp.status_code == 404:
+        return False
+    if resp.status_code >= 400:
+        raise UpstreamDataError("Upstream UniBo request failed")
+    return True
 
 
 def get_timetable(course_url, year, curr):
     """Checks if the selected course uses a JSON calendar and calls the appropriate get_timetable function"""
-    if has_json_timetable(course_url, year, curr):
-        timetable_url = constant.TIMETABLEURLFORMAT[get_course_lang(course_url)].format(course_url, year, curr)
-        req = requests.get(url=timetable_url)
-        timetable = encode_json_timetable(req.json())
+    normalized_course_url = normalize_course_url(course_url)
+    if has_json_timetable(normalized_course_url, year, curr):
+        timetable_url = constant.TIMETABLEURLFORMAT[get_course_lang(normalized_course_url)].format(
+            normalized_course_url, year, curr
+        )
+        timetable = encode_json_timetable(_fetch_json(timetable_url))
     else:
-        raw_timetable = get_raw_timetable_no_json(course_url, year, curr)
+        raw_timetable = get_raw_timetable_no_json(normalized_course_url, year, curr)
         timetable = encode_no_json_timetable(raw_timetable)
     return timetable
 
@@ -425,9 +511,12 @@ def get_classes_json(course_url, year, curr):
 
     As of 2020-09-28, JSON timetables do not have a list of classes anymore, so we have to traverse the
 	array of classes, get their names and remove duplicates"""
-    resp = requests.get(constant.TIMETABLEURLFORMAT[get_course_lang(course_url)].format(course_url, year, curr))
+    normalized_course_url = normalize_course_url(course_url)
+    resp = _fetch_json(
+        constant.TIMETABLEURLFORMAT[get_course_lang(normalized_course_url)].format(normalized_course_url, year, curr)
+    )
     classes = []
-    for _class in resp.json():
+    for _class in resp:
         classes.append(_class[constant.TITLE])
     return list(set(classes))
 

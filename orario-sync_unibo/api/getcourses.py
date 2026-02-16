@@ -1,20 +1,26 @@
-import json
-from http.server import BaseHTTPRequestHandler
+from urllib.parse import parse_qs, urlparse
 
-from api.getters import *
+from api import constant
+from api.getters import UpstreamDataError, get_course_list
+from api.http_handler_base import JsonApiHandler
+from api.security import ClientInputError, OriginNotAllowedError, parse_non_negative_int
 
 
-class handler(BaseHTTPRequestHandler):
+class handler(JsonApiHandler):
 
     def do_GET(self):
-        self.send_response(200)
-        self.send_header("Content-type", "application/json")
-        self.send_header("Access-Control-Allow-Origin", "*")
-        self.end_headers()
-        args = get_args_from_url(self.requestline)
-        school_id = args[constant.ARG_SCHOOL] + 1
-        course_list = get_course_list(school_id)
-        print(course_list)
-        message = json.dumps(course_list)
-        self.wfile.write(message.encode())
-        return
+        parsed = urlparse(self.path)
+        params = parse_qs(parsed.query)
+        cors_origin = None
+        try:
+            cors_origin = self._resolve_cors_origin()
+            school_id = parse_non_negative_int(params, constant.ARG_SCHOOL, default=0) + 1
+            self._json_response(get_course_list(school_id), cors_origin=cors_origin)
+        except OriginNotAllowedError:
+            self._json_response({"error": "Origin not allowed"}, status=403)
+        except ClientInputError as exc:
+            self._json_response({"error": str(exc)}, status=400, cors_origin=cors_origin)
+        except UpstreamDataError:
+            self._json_response({"error": "Unable to retrieve timetable data from UniBo"}, status=502, cors_origin=cors_origin)
+        except Exception:
+            self._json_response({"error": "Internal server error"}, status=500, cors_origin=cors_origin)
